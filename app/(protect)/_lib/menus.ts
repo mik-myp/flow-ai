@@ -1,4 +1,4 @@
-import { LucideIcon, Package, Workflow } from "lucide-react";
+import { Brain, LucideIcon, Workflow } from "lucide-react";
 
 const menus: {
   title: string;
@@ -13,7 +13,7 @@ const menus: {
   {
     title: "模型",
     url: "/models",
-    icon: Package,
+    icon: Brain,
   },
 ];
 
