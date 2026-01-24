@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme/provider";
-import { Toaster } from "@/components/ui/sonner";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { ConfigProvider, App } from "antd";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,14 +17,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <Toaster richColors position="top-center" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <AntdRegistry>
+            <ConfigProvider>
+              <App>{children}</App>
+            </ConfigProvider>
+          </AntdRegistry>
         </ThemeProvider>
       </body>
     </html>

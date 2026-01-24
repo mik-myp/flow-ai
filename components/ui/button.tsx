@@ -44,6 +44,7 @@ function BaseButton({
   variant = "default",
   size = "default",
   asChild = false,
+  id,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {

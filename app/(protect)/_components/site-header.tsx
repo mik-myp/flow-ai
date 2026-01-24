@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { BreadcrumbMenus } from "./breadcrumb-menus";
+import { ThemeSwitch } from "@/components/theme/switch";
 
 export function SiteHeader() {
   return (
@@ -24,6 +25,11 @@ export function SiteHeader() {
               GitHub
             </a>
           </Button>
+          <Separator
+            orientation="vertical"
+            className="mx-2 data-[orientation=vertical]:h-4"
+          />
+          <ThemeSwitch />
         </div>
       </div>
     </header>
