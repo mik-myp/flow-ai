@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme/provider";
-import { AntdRegistry } from "@ant-design/nextjs-registry";
-import { ConfigProvider, App } from "antd";
+import ThemeProvider from "@/components/theme/provider";
+import AntdProvider from "@/components/providers/AntdProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -23,11 +22,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AntdRegistry>
-            <ConfigProvider>
-              <App>{children}</App>
-            </ConfigProvider>
-          </AntdRegistry>
+          <AntdProvider>{children}</AntdProvider>
         </ThemeProvider>
       </body>
     </html>

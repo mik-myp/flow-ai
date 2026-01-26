@@ -3,7 +3,7 @@ import { Button } from "antd";
 import { createClient } from "@/lib/supabase/client";
 import { GithubOutlined } from "@ant-design/icons";
 
-export function SignupForm() {
+export default function SignupForm() {
   const supabase = createClient();
 
   const handleLoginWithGithub = async () => {
