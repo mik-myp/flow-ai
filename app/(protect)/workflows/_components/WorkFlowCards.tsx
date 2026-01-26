@@ -1,22 +1,22 @@
 "use client";
 import EmEmoji from "@/components/emoji/EmEmoji";
+import type { IWorkFlow } from "@/types/workflow";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 
 import { Pencil, Trash } from "lucide-react";
-import { Button, Flex, Popconfirm, Tag, Tooltip, Typography } from "antd";
-const { Text } = Typography;
+import {
+  Button,
+  Flex,
+  message,
+  Popconfirm,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
+import { createClient } from "@/lib/supabase/client";
 
-export interface IWorkFlow {
-  id: string;
-  created_at: string;
-  icon: string;
-  name: string;
-  description: string;
-  updated_at: string;
-  tags: string[];
-  user_id: string;
-}
+const { Text } = Typography;
 
 export default function WorkFlowCards({
   workflows,
@@ -25,17 +25,30 @@ export default function WorkFlowCards({
 }) {
   const router = useRouter();
 
-  console.log(
-    "🚀 ~ work-flow-info.tsx:7 ~ WorkFlowInfo ~ workflows:",
-    workflows,
-  );
+  const supabase = createClient();
+
+  const handleDelete = async (item: IWorkFlow) => {
+    try {
+      const { error } = await supabase
+        .from("work_flow")
+        .delete()
+        .eq("id", item.id);
+      if (error) {
+        throw error;
+      }
+      message.success("工作流删除成功.");
+      router.refresh();
+    } catch {
+      console.log("删除失败.");
+    }
+  };
 
   return (
     <div className="2k:grid-cols-6 relative mb-4 grid grow grid-cols-1 content-start gap-x-6 gap-y-8 px-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
       {workflows.map((item) => (
         <div
           key={item.id}
-          onClick={() => router.push(`/workFlow/${item.id}`)}
+          onClick={() => router.push(`/workflows/${item.id}`)}
           className="flex h-50 cursor-pointer flex-col justify-between gap-2 rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-md hover:shadow-lg"
         >
           <div className="flex items-center gap-3">
@@ -87,7 +100,7 @@ export default function WorkFlowCards({
                 type="link"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // onEdit();
+                  router.push(`/workflows/${item.id}/edit`);
                 }}
               ></Button>
             </Tooltip>
@@ -96,7 +109,7 @@ export default function WorkFlowCards({
                 title="确认删除？"
                 onConfirm={(e) => {
                   e?.stopPropagation();
-                  // onDelete();
+                  handleDelete(item);
                 }}
               >
                 <Button

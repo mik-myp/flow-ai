@@ -1,4 +1,6 @@
-import type { HTMLAttributes } from "react";
+"use client";
+
+import { useEffect, useState, type HTMLAttributes } from "react";
 
 export interface EmojiProps extends Omit<
   HTMLAttributes<HTMLElement>,
@@ -14,7 +16,14 @@ export interface EmojiProps extends Omit<
 }
 
 const EmEmoji = ({ id, native, shortcodes, ...rest }: EmojiProps) => {
-  if (!id && !native && !shortcodes) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  if (!mounted || (!id && !native && !shortcodes)) {
     return null;
   }
 
@@ -25,6 +34,7 @@ const EmEmoji = ({ id, native, shortcodes, ...rest }: EmojiProps) => {
       shortcodes={shortcodes}
       {...rest}
       key={id || native || shortcodes || "em-emoji"}
+      suppressHydrationWarning
     />
   );
 };
