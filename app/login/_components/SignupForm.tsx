@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "antd";
 import { createClient } from "@/lib/supabase/client";
 import { GithubOutlined } from "@ant-design/icons";
@@ -16,7 +17,13 @@ export default function SignupForm() {
   };
 
   return (
-    <Button color="default" variant="solid" onClick={handleLoginWithGithub}>
+    <Button
+      type="primary"
+      size="large"
+      block
+      className="h-12 rounded-full text-sm font-semibold"
+      onClick={handleLoginWithGithub}
+    >
       <GithubOutlined />
       使用 GitHub 登录
     </Button>

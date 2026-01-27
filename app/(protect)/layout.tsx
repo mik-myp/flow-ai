@@ -1,5 +1,3 @@
-import { Layout } from "antd";
-import { Content } from "antd/es/layout/layout";
 import SiteHeader from "./_components/SiteHeader";
 
 export default function ProtectLayout({
@@ -10,10 +8,10 @@ export default function ProtectLayout({
   modal: React.ReactNode;
 }) {
   return (
-    <Layout className="min-h-svh">
+    <div className="flex min-h-svh flex-col bg-slate-50 text-slate-900">
       <SiteHeader />
-      <Content className="h-full">{children}</Content>
+      <main className="flex-1 overflow-hidden">{children}</main>
       {modal}
-    </Layout>
+    </div>
   );
 }

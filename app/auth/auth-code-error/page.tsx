@@ -4,15 +4,13 @@ import Link from "next/link";
 export default function AuthCodeErrorPage() {
   return (
     <Result
-      className="bg-muted/50 flex h-screen flex-col items-center justify-center p-4"
+      className="flex h-screen flex-col items-center justify-center bg-slate-50 p-6"
       status="error"
-      title="授权登录失败"
-      subTitle="很抱歉，登录过程中出现了问题，请尝试重新登录."
+      title="授权失败"
+      subTitle="登录过程中出现问题，请稍后重试。"
       extra={[
         <Link href="/login" key="login">
-          <Button color="default" variant="solid">
-            返回登录页面
-          </Button>
+          <Button type="primary">返回登录</Button>
         </Link>,
       ]}
     />

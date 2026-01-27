@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Form, Input, message } from "antd";
-import { redirect, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import ModalForm, { ModalFormItem } from "@/components/ModalForm";
 import { createClient } from "@/lib/supabase/client";
 import type { IWorkFlow } from "@/types/workflow";
@@ -29,13 +29,13 @@ const workflowFormItems: ModalFormItem[] = [
   {
     name: "name",
     label: "工作流名称",
-    rules: [{ required: true, message: "请填写工作流名称" }],
-    children: <Input placeholder="工作流名称" />,
+    rules: [{ required: true, message: "请输入工作流名称。" }],
+    children: <Input placeholder="例如：客服分流" />,
   },
   {
     name: "description",
     label: "描述",
-    children: <Input.TextArea rows={4} placeholder="描述..." />,
+    children: <Input.TextArea rows={4} placeholder="描述该工作流的用途。" />,
   },
 ];
 
@@ -48,10 +48,9 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
   const [submitting, setSubmitting] = React.useState(false);
 
   const mode = workflow ? "edit" : "create";
-
   const workflowId = workflow?.id;
 
-  const title = workflow ? "创建工作流" : "编辑工作流";
+  const title = workflow ? "编辑工作流" : "创建工作流";
 
   const supabase = React.useMemo(() => createClient(), []);
 
@@ -61,13 +60,13 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
       : workflowId
         ? `/workflows/${workflowId}/edit`
         : "";
+
   const handleClose = () => {
     setOpen(false);
   };
 
   const handleAfterClose = () => {
     router.push("/workflows");
-    router.refresh();
   };
 
   React.useEffect(() => {
@@ -96,10 +95,10 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
           throw error;
         }
 
-        message.success("工作流创建成功.");
+        message.success("工作流已创建。");
       } else {
         if (!workflowId) {
-          message.error("缺少工作流ID");
+          message.error("缺少工作流 ID。");
           return;
         }
 
@@ -117,12 +116,13 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
           throw error;
         }
 
-        message.success("工作流更新成功.");
+        message.success("工作流已更新。");
       }
 
+      router.refresh();
       setOpen(false);
     } catch {
-      message.error("工作流更新失败.");
+      message.error("工作流更新失败。");
     } finally {
       setSubmitting(false);
     }

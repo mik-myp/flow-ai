@@ -1,5 +1,5 @@
 import WorkflowModal from "@/components/modals/WorkflowModal";
-import { createClient } from "@/lib/supabase/server";
+import { getWorkflowByIdServer } from "@/lib/supabase/queries";
 
 export default async function WorkflowEditModal({
   params,
@@ -7,14 +7,7 @@ export default async function WorkflowEditModal({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from("work_flow")
-    .select("icon,name,description")
-    .eq("id", id)
-    .single();
+  const data = await getWorkflowByIdServer(id);
 
   return (
     <WorkflowModal

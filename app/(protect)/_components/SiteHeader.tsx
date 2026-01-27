@@ -1,48 +1,49 @@
 "use client";
-import { theme } from "antd";
-import { Header } from "antd/es/layout/layout";
-import menus from "../_lib/menus";
-import clsx from "clsx";
-import { usePathname } from "next/navigation";
+
 import Link from "next/link";
+import { Waypoints } from "lucide-react";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
+import menus from "../_lib/menus";
+import SiteAvatar from "./SiteAvatar";
 
 export default function SiteHeader() {
-  const {
-    token: { colorBgContainer, colorBorder },
-  } = theme.useToken();
-
   const pathname = usePathname();
 
   return (
-    <Header
-      style={{
-        background: colorBgContainer,
-        borderBottom: `1px solid ${colorBorder}`,
-      }}
-      className="flex items-center justify-center gap-4"
-    >
-      <div className="flex h-8 flex-row items-center justify-center gap-4">
-        {menus.map((item) => {
-          return (
-            <div
-              key={item.url}
-              className={clsx(
-                "flex h-full items-center rounded-xl px-3 text-base text-[#475569]",
-                pathname === item.url && "text-(--ant-color-primary)!",
-                pathname !== item.url && "hover:bg-[#f5f5f5]",
-              )}
-            >
+    <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/85 backdrop-blur">
+      <div className="mx-auto flex items-center justify-between gap-6 px-6 py-4">
+        <Link href="/workflows" className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+            <Waypoints size={18} />
+          </span>
+          <span className="text-sm font-semibold text-slate-900">Flow AI</span>
+        </Link>
+
+        <nav className="flex flex-1 items-center justify-center gap-2">
+          {menus.map((item) => {
+            const isActive =
+              pathname === item.url || pathname.startsWith(`${item.url}/`);
+            return (
               <Link
+                key={item.url}
                 href={item.url}
-                className="flex flex-row items-center gap-2 text-inherit!"
+                className={clsx(
+                  "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition",
+                  isActive
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+                )}
               >
-                <div>{item.icon && <item.icon />}</div>
-                <div>{item.title}</div>
+                <span>{item.icon && <item.icon size={16} />}</span>
+                <span>{item.title}</span>
               </Link>
-            </div>
-          );
-        })}
+            );
+          })}
+        </nav>
+
+        <SiteAvatar />
       </div>
-    </Header>
+    </header>
   );
 }

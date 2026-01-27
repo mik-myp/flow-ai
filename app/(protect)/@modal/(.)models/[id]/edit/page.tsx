@@ -1,5 +1,5 @@
 import ModelModal from "@/components/modals/ModelModal";
-import { createClient } from "@/lib/supabase/server";
+import { getModelByIdServer } from "@/lib/supabase/queries";
 
 export default async function ModelEditModal({
   params,
@@ -7,13 +7,7 @@ export default async function ModelEditModal({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from("model")
-    .select("icon,name,description")
-    .eq("id", id)
-    .single();
+  const data = await getModelByIdServer(id);
 
   return (
     <ModelModal

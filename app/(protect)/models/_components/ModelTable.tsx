@@ -1,4 +1,5 @@
 "use client";
+
 import { IModel, ModelProvider } from "@/types/model";
 import {
   Button,
@@ -8,12 +9,15 @@ import {
   Table,
   TableColumnsType,
   Tag,
+  message,
 } from "antd";
 import dayjs from "dayjs";
 import { Pencil, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const providerLabels: Record<ModelProvider, string> = {
+  "ai-gateway": "AI 网关",
   openai: "OpenAI",
   anthropic: "Anthropic",
   "google-genai": "Google GenAI",
@@ -21,7 +25,8 @@ const providerLabels: Record<ModelProvider, string> = {
 };
 
 const providerColors: Record<ModelProvider, string> = {
-  openai: "blue",
+  "ai-gateway": "blue",
+  openai: "geekblue",
   anthropic: "purple",
   "google-genai": "green",
   "openai-compatible": "cyan",
@@ -29,15 +34,32 @@ const providerColors: Record<ModelProvider, string> = {
 
 const ModelTable = ({ models }: { models: IModel[] }) => {
   const router = useRouter();
+  const supabase = createClient();
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase.from("model").delete().eq("id", id);
+      if (error) {
+        throw error;
+      }
+      message.success("模型已删除。");
+      router.refresh();
+    } catch {
+      message.error("删除失败。");
+    }
+  };
 
   const columns: TableColumnsType<IModel> = [
     {
       title: "名称",
       dataIndex: "name",
       key: "name",
+      render: (value: string) => (
+        <span className="font-semibold text-slate-900">{value}</span>
+      ),
     },
     {
-      title: "提供商",
+      title: "供应商",
       dataIndex: "provider",
       key: "provider",
       render: (value: ModelProvider) => (
@@ -45,23 +67,26 @@ const ModelTable = ({ models }: { models: IModel[] }) => {
       ),
     },
     {
-      title: "模型名称",
+      title: "模型",
       dataIndex: "model",
       key: "model",
+      render: (value: string) => (
+        <span className="text-slate-700">{value}</span>
+      ),
     },
     {
-      title: "API 基础 URL",
-      dataIndex: "baseUrl",
-      key: "baseUrl",
+      title: "基础 URL",
+      dataIndex: "baseURL",
+      key: "baseURL",
       ellipsis: true,
       render: (value?: string) => value || "-",
     },
     {
       title: "更新时间",
-      dataIndex: "updateTime",
-      key: "updateTime",
-      render: (value?: number) =>
-        value ? dayjs(value).format("YYYY-MM-DD HH:mm:ss") : "-",
+      dataIndex: "updated_at",
+      key: "updated_at",
+      render: (value?: string) =>
+        value ? dayjs(value).format("YYYY-MM-DD HH:mm") : "-",
     },
     {
       title: "操作",
@@ -69,15 +94,20 @@ const ModelTable = ({ models }: { models: IModel[] }) => {
       render: (_, record) => (
         <Space>
           <Button
-            type="link"
+            type="text"
             icon={<Pencil size={16} />}
-            // onClick={() => handleEdit(record)}
+            className="text-slate-500 hover:text-indigo-600"
+            onClick={() => router.push(`/models/${record.id}/edit`)}
           />
           <Popconfirm
-            title="确认删除吗？"
-            // onConfirm={() => handleDelete(record.id)}
+            title="确认删除该模型？"
+            onConfirm={() => handleDelete(record.id)}
           >
-            <Button type="link" icon={<Trash size={16} />} danger />
+            <Button
+              type="text"
+              icon={<Trash size={16} />}
+              className="text-slate-500 hover:text-rose-500"
+            />
           </Popconfirm>
         </Space>
       ),
@@ -85,24 +115,20 @@ const ModelTable = ({ models }: { models: IModel[] }) => {
   ];
 
   return (
-    <Table<IModel>
-      className="px-4 py-6"
-      rowKey="id"
-      dataSource={models}
-      columns={columns}
-      title={() => (
-        <div className="flex justify-end">
-          <Button type="primary" onClick={() => router.push("/models/new")}>
-            添加新模型
-          </Button>
-        </div>
-      )}
-      locale={{
-        emptyText: (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} className="py-8" />
-        ),
-      }}
-    />
+    <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
+      <Table<IModel>
+        rowKey="id"
+        dataSource={models}
+        columns={columns}
+        pagination={{ pageSize: 8, showSizeChanger: false }}
+        className="text-sm"
+        locale={{
+          emptyText: (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} className="py-8" />
+          ),
+        }}
+      />
+    </div>
   );
 };
 export default ModelTable;
