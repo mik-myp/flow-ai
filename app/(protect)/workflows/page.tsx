@@ -19,7 +19,7 @@ const WorkFlows: React.FC = async () => {
           </div>
           <Link
             href="/workflows/new"
-            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="rounded-full bg-indigo-600! px-4 py-2 text-sm font-semibold text-white! shadow-sm transition hover:bg-indigo-500!"
           >
             创建工作流
           </Link>

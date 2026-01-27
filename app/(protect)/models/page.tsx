@@ -18,7 +18,7 @@ const Models: React.FC = async () => {
           </div>
           <Link
             href="/models/new"
-            className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+            className="rounded-full bg-indigo-600! px-4 py-2 text-sm font-semibold text-white! shadow-sm transition hover:bg-indigo-500!"
           >
             添加模型
           </Link>
