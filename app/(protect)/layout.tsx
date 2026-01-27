@@ -8,7 +8,7 @@ export default function ProtectLayout({
   modal: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-svh flex-col bg-slate-50 text-slate-900">
+    <div className="flex h-svh flex-col bg-slate-50 text-slate-900">
       <SiteHeader />
       <main className="flex-1 overflow-hidden">{children}</main>
       {modal}

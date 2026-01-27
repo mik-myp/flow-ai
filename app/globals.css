@@ -1,3 +1,19 @@
 @layer theme, base, antd, components, utilities;
 
+@import '@xyflow/react/dist/style.css';
+
 @import 'tailwindcss';
+
+.react-flow__handle:after {
+  content: "";
+  --tw-bg-opacity: 1;
+  background-color: #2970ff;
+  width: 2px;
+  height: 10px;
+  display: block;
+  margin: 11px 0 8px 15px;
+}
+
+.react-flow__handle-left:after {
+  margin: 11px 0 8px 13px;
+}
