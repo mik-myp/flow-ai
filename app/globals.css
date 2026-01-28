@@ -3,7 +3,7 @@
 @import '@xyflow/react/dist/style.css';
 
 @import 'tailwindcss';
-
+/*
 .react-flow__handle:after {
   content: "";
   --tw-bg-opacity: 1;
@@ -16,4 +16,4 @@
 
 .react-flow__handle-left:after {
   margin: 11px 0 8px 13px;
-}
+} */

@@ -12,13 +12,12 @@ import {
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import AddNodePopover from "../AddNodePopover";
-import type { FlowNodeType } from "@/types/flows";
 
 type FlowEdgeData = {
-  onStartAddNode?: (type: FlowNodeType) => void;
+  onStartAddNode?: (type: string) => void;
   onInsertNode?: (payload: {
     edgeId: string;
-    type: FlowNodeType;
+    type: string;
     position: { x: number; y: number };
   }) => void;
   isHovered?: boolean;

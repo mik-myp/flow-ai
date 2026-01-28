@@ -13,19 +13,19 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import AddNodePopover from "./AddNodePopover";
-import { FlowNodeType } from "@/types/flows";
+import useWorkFlow from "@/lib/workflows/store";
 
 type FlowControlsProps = {
   /** 开始添加节点 */
-  onStartAddNode: (type: FlowNodeType) => void;
-  /** 撤销 */
-  onUndo: () => void;
-  /** 重做 */
-  onRedo: () => void;
-  /** 是否可以撤销 */
-  canUndo: boolean;
-  /** 是否可以重做 */
-  canRedo: boolean;
+  onStartAddNode: (type: string) => void;
+  // /** 撤销 */
+  // onUndo: () => void;
+  // /** 重做 */
+  // onRedo: () => void;
+  // /** 是否可以撤销 */
+  // canUndo: boolean;
+  // /** 是否可以重做 */
+  // canRedo: boolean;
   /** 模式：指针模式 | 手模式 */
   interactionMode: "pointer" | "hand";
   /** 改变模式 */
@@ -64,15 +64,16 @@ const zoomList = [
 
 const FlowControls = ({
   onStartAddNode,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
+  // onUndo,
+  // onRedo,
+  // canUndo,
+  // canRedo,
   interactionMode,
   onModeChange,
   onToggleFullscreen,
   isFullscreen,
 }: FlowControlsProps) => {
+  const { startAddPreviewNode } = useWorkFlow();
   const { zoomIn, zoomOut, zoomTo, fitView } = useReactFlow();
   const { zoom } = useViewport();
   const zoomPercent = Math.round(zoom * 100);
@@ -140,7 +141,7 @@ const FlowControls = ({
           />
         </Tooltip>
       </div>
-      <div className={panelItemClassName}>
+      {/* <div className={panelItemClassName}>
         <Tooltip title="撤销">
           <Button
             type="text"
@@ -157,7 +158,7 @@ const FlowControls = ({
             disabled={!canRedo}
           />
         </Tooltip>
-      </div>
+      </div> */}
       <div className={panelItemClassName}>
         <AddNodePopover onSelect={onStartAddNode}>
           <Tooltip title="添加节点">

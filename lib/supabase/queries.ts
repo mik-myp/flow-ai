@@ -3,6 +3,18 @@ import { isRetryableSupabaseError, logSupabaseError } from "./errors";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
 
+function handleRetryableError<T>(
+  context: string,
+  error: unknown,
+  fallback: T,
+): T {
+  if (isRetryableSupabaseError(error)) {
+    logSupabaseError(context, error);
+    return fallback;
+  }
+  throw error;
+}
+
 async function getServerUserId(
   supabase: SupabaseServerClient,
   context: string,
@@ -14,33 +26,13 @@ async function getServerUserId(
     } = await supabase.auth.getUser();
 
     if (error) {
-      if (isRetryableSupabaseError(error)) {
-        logSupabaseError(`${context}.getUser`, error);
-        return null;
-      }
-      throw error;
+      return handleRetryableError(`${context}.getUser`, error, null);
     }
 
     return user?.id ?? null;
   } catch (error) {
-    if (isRetryableSupabaseError(error)) {
-      logSupabaseError(`${context}.getUser`, error);
-      return null;
-    }
-    throw error;
+    return handleRetryableError(`${context}.getUser`, error, null);
   }
-}
-
-function handleRetryableError<T>(
-  context: string,
-  error: unknown,
-  fallback: T,
-): T {
-  if (isRetryableSupabaseError(error)) {
-    logSupabaseError(context, error);
-    return fallback;
-  }
-  throw error;
 }
 
 // 获取当前用户的所有workflow
@@ -66,6 +58,42 @@ export async function getUserWorkflowsServer() {
     return data ?? [];
   } catch (error) {
     return handleRetryableError("getUserWorkflowsServer", error, []);
+  }
+}
+
+export async function getWorkflowByIdServer(id: string) {
+  const supabase = await createServerClient();
+
+  try {
+    const [workflowRes, nodesRes, edgesRes] = await Promise.all([
+      supabase.from("work_flow").select("*").eq("id", id).single(),
+      supabase.from("node").select("*").eq("work_flow_id", id),
+      supabase.from("edge").select("*").eq("work_flow_id", id),
+    ]);
+
+    if (workflowRes.error || nodesRes.error || edgesRes.error) {
+      return handleRetryableError(
+        "getWorkflowByIdServer",
+        workflowRes.error || nodesRes.error || edgesRes.error,
+        {
+          workflow: {},
+          nodes: [],
+          edges: [],
+        },
+      );
+    }
+
+    return {
+      workflow: workflowRes.data,
+      nodes: nodesRes.data,
+      edges: edgesRes.data,
+    };
+  } catch (error) {
+    return handleRetryableError("getWorkflowByIdServer", error, {
+      workflow: {},
+      nodes: [],
+      edges: [],
+    });
   }
 }
 
@@ -95,28 +123,6 @@ export async function getUserModelsServer() {
   }
 }
 
-export async function getWorkflowByIdServer(id: string) {
-  const supabase = await createServerClient();
-
-  try {
-    const { data, error } = await supabase
-      .from("work_flow")
-      .select("id,name,description,updated_at,icon")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      logSupabaseError("getWorkflowByIdServer", error);
-      return null;
-    }
-
-    return data ?? null;
-  } catch (error) {
-    logSupabaseError("getWorkflowByIdServer", error);
-    return null;
-  }
-}
-
 export async function getModelByIdServer(id: string) {
   const supabase = await createServerClient();
 
@@ -128,13 +134,11 @@ export async function getModelByIdServer(id: string) {
       .single();
 
     if (error) {
-      logSupabaseError("getModelByIdServer", error);
-      return null;
+      return handleRetryableError("getModelByIdServer", error, null);
     }
 
     return data ?? null;
   } catch (error) {
-    logSupabaseError("getModelByIdServer", error);
-    return null;
+    return handleRetryableError("getModelByIdServer", error, null);
   }
 }

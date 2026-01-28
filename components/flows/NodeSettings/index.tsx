@@ -7,7 +7,7 @@ import { useReactFlow } from "@xyflow/react";
 import { X } from "lucide-react";
 import { BaseNodeData, TNode } from "@/types/flows";
 import EmEmoji from "@/components/emoji/EmEmoji";
-import { nodeMeta } from "@/lib/flows";
+import { nodeMeta } from "@/lib/workflows";
 
 type NodeFormValues = NonNullable<BaseNodeData>;
 type NodeSettingsValues = Record<string, object | undefined>;
