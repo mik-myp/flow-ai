@@ -1,10 +1,10 @@
-import FlowEdge from "@/components/flows/edges/FlowEdge";
-import GenerateImageNode from "@/components/flows/nodes/GenerateImageNode";
-import GenerateTextNode from "@/components/flows/nodes/GenerateTextNode";
-import PreviewNode from "@/components/flows/nodes/PreviewNode";
-import TextInputNode from "@/components/flows/nodes/TextInputNode";
+import FlowEdge from "@/components/workflows/edges/FlowEdge";
+import GenerateImageNode from "@/components/workflows/nodes/GenerateImageNode";
+import GenerateTextNode from "@/components/workflows/nodes/GenerateTextNode";
+import TextInputNode from "@/components/workflows/nodes/TextInputNode";
+import { FlowNodeType, NodeMetaValue } from "@/types/workflow";
 
-export const nodeMeta = {
+export const nodeMeta: Record<FlowNodeType, NodeMetaValue> = {
   textInput: {
     id: "textInput",
     meta: {
@@ -46,6 +46,7 @@ export const nodeMeta = {
     data: {
       title: "生成文本",
       description: "",
+      model: "gpt-4",
       settingData: {
         textModel: undefined,
       },
@@ -69,6 +70,7 @@ export const nodeMeta = {
     data: {
       title: "生成图像",
       description: "",
+      model: "dall-e-3",
       settingData: {
         imageModel: undefined,
       },
@@ -76,10 +78,13 @@ export const nodeMeta = {
   },
 };
 
-export const nodeCatalog = Object.keys(nodeMeta).map((type) => ({
-  ...nodeMeta[type],
-  type: type,
-}));
+export const nodeCatalog = Object.keys(nodeMeta).map((type) => {
+  const nodeMetaItem = nodeMeta[type as FlowNodeType];
+  return {
+    ...nodeMetaItem,
+    type: type,
+  };
+});
 
 export const nodeTypes = {
   textInput: TextInputNode,

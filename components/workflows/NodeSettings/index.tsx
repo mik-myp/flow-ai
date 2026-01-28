@@ -5,20 +5,16 @@ import type { Edge, Node } from "@xyflow/react";
 import { useReactFlow } from "@xyflow/react";
 
 import { X } from "lucide-react";
-import { BaseNodeData, TNode } from "@/types/flows";
 import EmEmoji from "@/components/emoji/EmEmoji";
 import { nodeMeta } from "@/lib/workflows";
 
-type NodeFormValues = NonNullable<BaseNodeData>;
-type NodeSettingsValues = Record<string, object | undefined>;
-type NodeSettingSchema = NonNullable<NodeFormValues["settingSchema"]>;
-type NodeSettingField = NodeSettingSchema["fields"][number];
+type NodeSettingsValues = Record<string, unknown>;
 
 type NodeSettingsDrawerProps = {
-  node: TNode | null;
+  node: Node | null;
   open: boolean;
   onClose: () => void;
-  onUpdateNodeData: (nodeId: string, data: Partial<NodeFormValues>) => void;
+  onUpdateNodeData: (nodeId: string, data: Record<string, unknown>) => void;
 };
 
 const NodeSettingsDrawer = ({
@@ -30,29 +26,41 @@ const NodeSettingsDrawer = ({
   const { updateNodeData } = useReactFlow<Node, Edge>();
   const [form] = Form.useForm<NodeSettingsValues>();
 
-  const modelOptions = [];
+  const modelOptions: Array<{ label: string; value: string }> = [];
 
   const nodeData = useMemo(() => {
+    if (!node?.type) {
+      return {
+        icon: "",
+        title: "",
+        description: "",
+      };
+    }
+
+    const meta = nodeMeta[node.type as keyof typeof nodeMeta];
     return {
-      icon: node?.originIcon ?? "",
-      title: node?.data?.title ?? node?.originTitle ?? "",
-      description: node?.data?.description ?? "",
+      icon: meta?.meta.icon ?? "",
+      title:
+        ((node.data as Record<string, unknown>)?.title as string) ??
+        meta?.meta.title ??
+        "",
+      description:
+        ((node.data as Record<string, unknown>)?.description as string) ?? "",
     };
   }, [node]);
 
-  const settingFields = useMemo<NodeSettingField[]>(() => {
-    const schema = node?.data?.settingSchema?.fields;
-    if (schema?.length) {
-      return schema;
+  const settingFields = useMemo(() => {
+    if (!node?.type) {
+      return [];
     }
-    if (node?.type) {
-      const meta = nodeMeta[node.type as keyof typeof nodeMeta];
-      return meta?.data.settingSchema?.fields ?? [];
-    }
-    return [];
+    const meta = nodeMeta[node.type as keyof typeof nodeMeta];
+    return meta?.meta.settingFidlds ?? [];
   }, [node]);
+
   const settings = useMemo<NodeSettingsValues>(
-    () => (node?.data?.settings ?? {}) as NodeSettingsValues,
+    () =>
+      ((node?.data as Record<string, unknown>)?.settingData ??
+        {}) as NodeSettingsValues,
     [node],
   );
 
@@ -65,16 +73,14 @@ const NodeSettingsDrawer = ({
   }, [form, node, settings]);
 
   const handleUpdate = useCallback(
-    (patch: Partial<NodeFormValues>) => {
+    (patch: Record<string, unknown>) => {
       if (!node) {
         return;
       }
-      updateNodeData(node.id, (node) => ({
-        nodeData: {
-          ...node.data,
-          ...patch,
-        },
-      }));
+      updateNodeData(node.id, {
+        ...node.data,
+        ...patch,
+      });
       onUpdateNodeData(node.id, patch);
     },
     [node, updateNodeData, onUpdateNodeData],
@@ -85,13 +91,20 @@ const NodeSettingsDrawer = ({
       if (!node) {
         return;
       }
-      handleUpdate({ settings: allValues });
+      handleUpdate({ settingData: allValues });
     },
     [handleUpdate, node],
   );
 
   const renderSettingField = useCallback(
-    (field: NodeSettingField) => {
+    (field: {
+      name: string;
+      type: string;
+      placeholder?: string;
+      required?: boolean;
+      optionsSource?: string;
+      options?: Array<{ label: string; value: string }>;
+    }) => {
       if (field.type === "select") {
         const options =
           field.optionsSource === "models"
@@ -221,7 +234,6 @@ const NodeSettingsDrawer = ({
                 key={field.name}
                 name={field.name}
                 label={field.label}
-                extra={field.extra}
                 rules={
                   field.required
                     ? [{ required: true, message: `请填写${field.label}` }]

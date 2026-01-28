@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import AddNodePopover from "./AddNodePopover";
-import useWorkFlow from "@/lib/workflows/store";
 
 type FlowControlsProps = {
   /** 开始添加节点 */
@@ -73,7 +72,6 @@ const FlowControls = ({
   onToggleFullscreen,
   isFullscreen,
 }: FlowControlsProps) => {
-  const { startAddPreviewNode } = useWorkFlow();
   const { zoomIn, zoomOut, zoomTo, fitView } = useReactFlow();
   const { zoom } = useViewport();
   const zoomPercent = Math.round(zoom * 100);

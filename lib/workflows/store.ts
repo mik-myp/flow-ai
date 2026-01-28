@@ -1,13 +1,15 @@
-import { IWorkFlow, IWorkFlowState } from "@/types/workflow";
-import {
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
+import type { IWorkFlow, IWorkFlowState } from "@/types/workflow";
+import type {
   Connection,
   Edge,
   EdgeChange,
   Node,
   NodeChange,
+} from "@xyflow/react";
+import {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
 } from "@xyflow/react";
 import { create } from "zustand";
 import { nodeMeta } from "./constant";
@@ -18,15 +20,6 @@ const useWorkFlow = create<IWorkFlowState>((set, get) => ({
   workflow: {},
   edges: [],
   nodes: [],
-
-  isPreview: false,
-
-  previewNode: {
-    id: "preview-node",
-    type: "",
-    position: { x: 0, y: 0 },
-    data: {},
-  },
 
   // 初始化工作流数据
   initWorkflow: (
@@ -49,13 +42,13 @@ const useWorkFlow = create<IWorkFlowState>((set, get) => ({
     }));
   },
 
-  onNodesChange: (changes: NodeChange<Node>[]) => {
+  onNodesChange: (changes: NodeChange[]) => {
     set({
       nodes: applyNodeChanges(changes, get().nodes),
     });
   },
 
-  onEdgesChange: (changes: EdgeChange<Edge>[]) => {
+  onEdgesChange: (changes: EdgeChange[]) => {
     set({
       edges: applyEdgeChanges(changes, get().edges),
     });
@@ -64,44 +57,6 @@ const useWorkFlow = create<IWorkFlowState>((set, get) => ({
   onConnect: (connection: Connection) => {
     set({
       edges: addEdge(connection, get().edges),
-    });
-  },
-
-  startAddPreviewNode: (type: string) => {
-    set({
-      isPreview: true,
-      previewNode: {
-        ...get().previewNode,
-        type,
-      },
-    });
-  },
-
-  updatePreviewPosition: (position: { x: number; y: number } | null) => {
-    set({
-      previewNode: {
-        ...get().previewNode,
-        position: position ?? { x: 0, y: 0 },
-      },
-    });
-  },
-
-  stopAddPreviewNode: (type: "place" | "cancel") => {
-    if (type === "place") {
-      get().addNode({
-        ...get().previewNode,
-        ...nodeMeta[get().previewNode.type],
-        id: uuidv4(),
-      });
-    }
-    set({
-      isPreview: false,
-      previewNode: {
-        id: "preview-node",
-        type: "previewNode",
-        position: { x: 0, y: 0 },
-        data: {},
-      },
     });
   },
 

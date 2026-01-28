@@ -3,19 +3,17 @@ import EmEmoji from "@/components/emoji/EmEmoji";
 import { Trash } from "lucide-react";
 import React from "react";
 import { Button } from "antd";
+import { Node, NodeProps } from "@xyflow/react";
+import { FlowNode } from "@/types/workflow";
 
 const BaseNode = ({
   children,
   selected,
   icon,
   data,
-}: {
+}: NodeProps<Node<FlowNode>> & {
   children: React.ReactNode;
-  selected: boolean;
   icon: string;
-  data: {
-    title: string;
-  };
 }) => {
   return (
     <div
@@ -27,7 +25,7 @@ const BaseNode = ({
     >
       <div className="flex flex-row items-center justify-between gap-2 border-b px-3 py-2">
         <EmEmoji id={icon} size={20} />
-        <div className="flex-1">{data.title}</div>
+        <div className="flex-1">{data.data.title}</div>
         <Button
           icon={<Trash size={16} />}
           type="text"
