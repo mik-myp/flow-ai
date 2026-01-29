@@ -60,8 +60,7 @@ export async function getUserWorkflowsServer() {
     return handleRetryableError("getUserWorkflowsServer", error, []);
   }
 }
-
-export async function getWorkflowByIdServer(id: string) {
+export async function getWorkflowWithNodeAndEdgeByIdServer(id: string) {
   const supabase = await createServerClient();
 
   try {
@@ -73,7 +72,7 @@ export async function getWorkflowByIdServer(id: string) {
 
     if (workflowRes.error || nodesRes.error || edgesRes.error) {
       return handleRetryableError(
-        "getWorkflowByIdServer",
+        "getWorkflowWithNodeAndEdgeByIdServer",
         workflowRes.error || nodesRes.error || edgesRes.error,
         {
           workflow: {},
@@ -89,11 +88,31 @@ export async function getWorkflowByIdServer(id: string) {
       edges: edgesRes.data,
     };
   } catch (error) {
-    return handleRetryableError("getWorkflowByIdServer", error, {
+    return handleRetryableError("getWorkflowWithNodeAndEdgeByIdServer", error, {
       workflow: {},
       nodes: [],
       edges: [],
     });
+  }
+}
+
+export async function getWorkflowByIdServer(id: string) {
+  const supabase = await createServerClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("work_flow")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      return handleRetryableError("getWorkflowByIdServer", error, null);
+    }
+
+    return data ?? null;
+  } catch (error) {
+    return handleRetryableError("getWorkflowByIdServer", error, null);
   }
 }
 

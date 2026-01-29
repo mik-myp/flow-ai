@@ -1,8 +1,8 @@
 import type { NodeProps, Node } from "@xyflow/react";
-import { Handle, Position } from "@xyflow/react";
 import BaseNode from "./BaseNode";
 import NodeField from "./NodeField";
 import { BaseNodeData } from "@/types/workflow";
+import FlowHandle from "../handles/FlowHandle";
 
 const GenerateTextNode = (
   props: NodeProps<Node<BaseNodeData, "generateText">>,
@@ -15,8 +15,29 @@ const GenerateTextNode = (
       />
       {props.id ? (
         <>
-          <Handle type="target" position={Position.Left} />
-          <Handle type="source" position={Position.Right} />
+          <FlowHandle
+            handles={[
+              {
+                label: "系统词",
+                connectionCount: 1,
+                handleId: "system",
+              },
+            ]}
+          />
+          <FlowHandle
+            handles={[
+              {
+                label: "提示词",
+                connectionCount: 1,
+                handleId: "prompt",
+              },
+              {
+                label: "结果",
+                connectionCount: 1,
+                handleId: "result",
+              },
+            ]}
+          />
         </>
       ) : null}
     </BaseNode>

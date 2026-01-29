@@ -1,8 +1,8 @@
 import type { NodeProps, Node } from "@xyflow/react";
-import { Handle, Position } from "@xyflow/react";
 import BaseNode from "./BaseNode";
 import NodeField from "./NodeField";
 import { BaseNodeData } from "@/types/workflow";
+import FlowHandle from "../handles/FlowHandle";
 
 const GenerateImageNode = (
   props: NodeProps<Node<BaseNodeData, "generateImage">>,
@@ -14,10 +14,15 @@ const GenerateImageNode = (
         content={props.data.settingData?.imageModel as string}
       />
       {props.id ? (
-        <>
-          <Handle type="target" position={Position.Left} />
-          <Handle type="source" position={Position.Right} />
-        </>
+        <FlowHandle
+          handles={[
+            {
+              label: "提示词",
+              connectionCount: 1,
+              handleId: "prompt",
+            },
+          ]}
+        />
       ) : null}
     </BaseNode>
   );

@@ -20,6 +20,14 @@ export interface IWorkFlow {
   user_id: string;
 }
 
+export type TNode = Node & {
+  updated_at: string;
+};
+
+export type TEdge = Edge & {
+  updated_at: string;
+};
+
 /**
  * 工作流状态管理接口
  * 使用 @xyflow/react 提供的标准类型
@@ -28,8 +36,8 @@ export interface IWorkFlowState {
   // 状态数据
   workflowId: string | null;
   workflow: IWorkFlow | Record<string, never>;
-  nodes: Node[];
-  edges: Edge[];
+  nodes: TNode[];
+  edges: TEdge[];
 
   // 初始化方法
   initWorkflow: (
@@ -41,10 +49,11 @@ export interface IWorkFlowState {
 
   // 节点操作方法
   addNode: (node: Node) => void;
-  onNodesChange: OnNodesChange;
+  deleteNode: (nodeId: string) => void;
+  onNodesChange: OnNodesChange<TNode>;
 
   // 边操作方法
-  onEdgesChange: OnEdgesChange;
+  onEdgesChange: OnEdgesChange<TEdge>;
 
   // 连接方法
   onConnect: (connection: Connection) => void;
@@ -66,4 +75,10 @@ export interface BaseNodeData extends Record<string, unknown> {
     textModel?: string;
     imageModel?: string;
   };
+}
+
+export interface IHandle {
+  label: string;
+  connectionCount?: number;
+  handleId: string;
 }

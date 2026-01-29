@@ -95,3 +95,26 @@ export async function getModelApiKey(
       reject(request.error ?? new Error("IndexedDB read failed"));
   });
 }
+
+export async function deleteModelApiKey(
+  indexedDBId?: string | null,
+): Promise<void> {
+  if (!indexedDBId) {
+    return;
+  }
+
+  const storeHandle = await getStore("readwrite");
+  if (!storeHandle) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    storeHandle.store.delete(indexedDBId);
+
+    storeHandle.transaction.oncomplete = () => resolve();
+    storeHandle.transaction.onabort = () =>
+      reject(storeHandle.transaction.error ?? new Error("IndexedDB aborted"));
+    storeHandle.transaction.onerror = () =>
+      reject(storeHandle.transaction.error ?? new Error("IndexedDB failed"));
+  });
+}

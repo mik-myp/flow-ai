@@ -1,4 +1,4 @@
-import { ShieldCheck, Sparkles, Workflow } from "lucide-react";
+import { ShieldCheck, Sparkles, Workflow, Waypoints } from "lucide-react";
 import Link from "next/link";
 import SignupForm from "./_components/SignupForm";
 
@@ -33,7 +33,7 @@ export default function SignupPage() {
           <div className="relative z-10 flex w-full flex-col justify-between p-12 text-white">
             <Link href="/login" className="flex items-center gap-2 text-lg">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white">
-                <Workflow className="h-5 w-5" />
+                <Waypoints className="h-5 w-5" />
               </span>
               <span className="font-semibold text-white">Flow AI</span>
             </Link>

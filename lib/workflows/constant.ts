@@ -24,7 +24,7 @@ export const nodeMeta: Record<
   textInput: {
     id: "textInput",
     meta: {
-      icon: "keyboard",
+      icon: "pencil2",
       title: "文本输入",
       description: "文本输入描述",
       settingFidlds: [
@@ -47,7 +47,7 @@ export const nodeMeta: Record<
   generateText: {
     id: "generateText",
     meta: {
-      icon: "robot",
+      icon: "book",
       title: "生成文本",
       description: "根据系统词和提示词生成文本",
       settingFidlds: [
@@ -71,7 +71,7 @@ export const nodeMeta: Record<
   generateImage: {
     id: "generateImage",
     meta: {
-      icon: "image",
+      icon: "film_frames",
       title: "生成图像",
       description: "根据提示词生成图像",
       settingFidlds: [

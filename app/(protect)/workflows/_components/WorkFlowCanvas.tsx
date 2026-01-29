@@ -2,11 +2,13 @@
 
 import FlowControls from "@/components/workflows/FlowControls";
 import PreviewNode from "@/components/workflows/nodes/PreviewNode";
-import { edgeTypes, nodeCatalog, nodeMeta, nodeTypes } from "@/lib/workflows";
+
+import { edgeTypes, nodeCatalog, nodeTypes } from "@/lib/workflows";
 import useWorkFlow from "@/lib/workflows/store";
-import type { FlowNodeType, IWorkFlow } from "@/types/workflow";
+import type { FlowNodeType, IWorkFlow, TEdge, TNode } from "@/types/workflow";
 import type { Edge, Node, ReactFlowInstance } from "@xyflow/react";
-import { Background, ReactFlow, useReactFlow } from "@xyflow/react";
+import { Background, ReactFlow } from "@xyflow/react";
+import { message } from "antd";
 import React, {
   useCallback,
   useEffect,
@@ -16,6 +18,18 @@ import React, {
   type MouseEvent,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
+
+// 添加防抖函数
+const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
+  func: T,
+  delay: number,
+): ((...args: Parameters<T>) => void) => {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
 
 const WorkFlowCanvas = ({
   workflowId,
@@ -32,8 +46,11 @@ const WorkFlowCanvas = ({
 
   /** 鼠标移动时的位置  */
   const pointPosRef = useRef<{ x: number; y: number } | null>(null);
-
-  const reactFlow = useReactFlow();
+  const previewRafRef = useRef<number | null>(null);
+  const latestCursorRef = useRef<{ x: number; y: number } | null>(null);
+  const reactFlowInstanceRef = useRef<ReactFlowInstance<TNode, TEdge> | null>(
+    null,
+  );
 
   const {
     nodes,
@@ -45,9 +62,6 @@ const WorkFlowCanvas = ({
     clearWorkflow,
     addNode,
   } = useWorkFlow();
-
-  const [reactFlowInstance, setReactFlowInstance] =
-    useState<ReactFlowInstance | null>(null);
 
   /** 画布模式：指针模式 | 手模式 */
   const [interactionMode, setInteractionMode] = useState<"pointer" | "hand">(
@@ -65,11 +79,53 @@ const WorkFlowCanvas = ({
     y: number;
   } | null>(null);
 
-  /** 当前激活的节点id */
-  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
-
   /** 是否全屏 */
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 创建防抖后的保存函数
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSaveWorkflow = useCallback(
+    // eslint-disable-next-line react-hooks/use-memo
+    debounce(
+      async (
+        currentWorkflowId: string,
+        currentNodes: Node[],
+        currentEdges: Edge[],
+      ) => {
+        try {
+          const response = await fetch("/workflow/save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              workflowId: currentWorkflowId,
+              nodes: currentNodes,
+              edges: currentEdges,
+            }),
+          });
+          console.log("response", response);
+
+          if (!response.ok) {
+            message.error("保存工作流失败");
+          } else {
+            message.success("工作流保存成功");
+          }
+        } catch {
+          message.error("保存工作流时发生错误");
+        }
+      },
+      5000,
+    ),
+    [],
+  );
+
+  // 当nodes或edges变化时，调用防抖保存函数
+  useEffect(() => {
+    if (nodes.length > 0 || edges.length > 0) {
+      debouncedSaveWorkflow(workflowId, nodes, edges);
+    }
+  }, [nodes, edges, debouncedSaveWorkflow, workflowId]);
 
   const renderPreviewNode = useMemo(() => {
     if (pendingAddNodeType && cursorPosition) {
@@ -98,14 +154,16 @@ const WorkFlowCanvas = ({
     };
   }, []);
 
-  const handleInit = useCallback((instance: ReactFlowInstance) => {
-    setReactFlowInstance(instance);
-  }, []);
+  const handleInit = useCallback(
+    (instance: ReactFlowInstance<TNode, TEdge>) => {
+      reactFlowInstanceRef.current = instance;
+    },
+    [],
+  );
 
   /** 进入所选节点类型的放置模式。 */
   const handleStartAddNode = useCallback(
     (type: string) => {
-      setActiveNodeId(null);
       setInteractionMode("pointer");
       setPendingAddNodeType(type);
       const lastPoint = pointPosRef.current;
@@ -122,7 +180,8 @@ const WorkFlowCanvas = ({
   /** 在点击位置提交待放置节点。 */
   const handlePaneClick = useCallback(
     (e: MouseEvent) => {
-      if (!pendingAddNodeType || !reactFlowInstance) {
+      const instance = reactFlowInstanceRef.current;
+      if (!pendingAddNodeType || !instance) {
         return;
       }
       const definition = nodeCatalog.find(
@@ -133,7 +192,7 @@ const WorkFlowCanvas = ({
       }
 
       /** 将屏幕坐标转换为画布坐标用于放置。 */
-      const position = reactFlow.screenToFlowPosition({
+      const position = instance.screenToFlowPosition({
         x: e.clientX,
         y: e.clientY,
       });
@@ -145,11 +204,10 @@ const WorkFlowCanvas = ({
         data: { ...definition.data },
       };
       addNode(newNode);
-      setActiveNodeId(newNode.id);
       setPendingAddNodeType(null);
       setCursorPosition(null);
     },
-    [pendingAddNodeType, reactFlowInstance, addNode, reactFlow],
+    [pendingAddNodeType, addNode],
   );
 
   /** 跟踪鼠标移动以定位预览节点。 */
@@ -160,16 +218,32 @@ const WorkFlowCanvas = ({
       if (!pendingAddNodeType) {
         return;
       }
-      const localPoint = getLocalPoint(screenPoint);
-      if (localPoint) {
-        setCursorPosition(localPoint);
+      latestCursorRef.current = screenPoint;
+      if (previewRafRef.current !== null) {
+        return;
       }
+      previewRafRef.current = requestAnimationFrame(() => {
+        previewRafRef.current = null;
+        const latestPoint = latestCursorRef.current;
+        if (!latestPoint) {
+          return;
+        }
+        const localPoint = getLocalPoint(latestPoint);
+        if (localPoint) {
+          setCursorPosition(localPoint);
+        }
+      });
     },
     [getLocalPoint, pendingAddNodeType],
   );
 
   const handleWrapperMouseLeave = useCallback(() => {
     if (pendingAddNodeType) {
+      if (previewRafRef.current !== null) {
+        cancelAnimationFrame(previewRafRef.current);
+        previewRafRef.current = null;
+      }
+      latestCursorRef.current = null;
       setCursorPosition(null);
     }
   }, [pendingAddNodeType]);
@@ -184,6 +258,14 @@ const WorkFlowCanvas = ({
     } else {
       await wrapperRef.current.requestFullscreen();
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (previewRafRef.current !== null) {
+        cancelAnimationFrame(previewRafRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -212,11 +294,13 @@ const WorkFlowCanvas = ({
   return (
     <div
       ref={wrapperRef}
-      className={`relative h-full w-full bg-white${pendingAddNodeType ? "cursor-crosshair" : ""}`}
+      className={`relative h-full w-full bg-white${
+        pendingAddNodeType ? "cursor-crosshair" : ""
+      }`}
       onMouseMove={handleWrapperMouseMove}
       onMouseLeave={handleWrapperMouseLeave}
     >
-      <ReactFlow
+      <ReactFlow<TNode, TEdge>
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -230,6 +314,7 @@ const WorkFlowCanvas = ({
         elementsSelectable={interactionMode === "pointer"}
         panOnDrag={interactionMode === "hand"}
         panOnScroll={interactionMode === "hand"}
+        onlyRenderVisibleElements
         fitView
       >
         <Background />

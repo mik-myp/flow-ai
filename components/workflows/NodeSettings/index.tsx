@@ -8,7 +8,7 @@ import { X } from "lucide-react";
 import EmEmoji from "@/components/emoji/EmEmoji";
 import { nodeMeta } from "@/lib/workflows";
 
-type NodeSettingsValues = Record<string, unknown>;
+type NodeSettingsValues = Record<string, {} | undefined>;
 
 type NodeSettingsDrawerProps = {
   node: Node | null;

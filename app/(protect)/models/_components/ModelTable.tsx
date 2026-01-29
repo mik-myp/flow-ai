@@ -15,6 +15,8 @@ import dayjs from "dayjs";
 import { Pencil, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
+import { deleteModelApiKey } from "@/lib/indexeddb/model-api-keys";
 
 const providerLabels: Record<ModelProvider, string> = {
   "ai-gateway": "AI 网关",
@@ -35,17 +37,32 @@ const providerColors: Record<ModelProvider, string> = {
 const ModelTable = ({ models }: { models: IModel[] }) => {
   const router = useRouter();
   const supabase = createClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (record: IModel) => {
+    if (deletingId) {
+      return;
+    }
+    setDeletingId(record.id);
     try {
-      const { error } = await supabase.from("model").delete().eq("id", id);
+      const { error } = await supabase
+        .from("model")
+        .delete()
+        .eq("id", record.id);
       if (error) {
         throw error;
+      }
+      try {
+        await deleteModelApiKey(record.indexedDB_id);
+      } catch (error) {
+        console.warn("Failed to delete model apiKey", error);
       }
       message.success("模型已删除。");
       router.refresh();
     } catch {
       message.error("删除失败。");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -101,11 +118,14 @@ const ModelTable = ({ models }: { models: IModel[] }) => {
           />
           <Popconfirm
             title="确认删除该模型？"
-            onConfirm={() => handleDelete(record.id)}
+            okButtonProps={{ loading: deletingId === record.id }}
+            onConfirm={() => handleDelete(record)}
           >
             <Button
               type="text"
               icon={<Trash size={16} />}
+              loading={deletingId === record.id}
+              disabled={deletingId === record.id}
               className="text-slate-500 hover:text-rose-500"
             />
           </Popconfirm>

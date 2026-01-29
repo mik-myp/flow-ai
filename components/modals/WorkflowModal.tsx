@@ -77,18 +77,24 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
 
   const handleSubmit = async (values: WorkflowFormValues) => {
     setSubmitting(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (!user || userError) {
+        message.error("用户未登录。");
+        return;
+      }
+
       if (mode === "create") {
         const { error } = await supabase.from("work_flow").insert({
           icon: values.icon,
           name: values.name,
           description: values.description,
           tags: [],
-          user_id: user!.id,
+          user_id: user.id,
         });
 
         if (error) {
@@ -119,8 +125,8 @@ export default function WorkflowModal({ workflow }: WorkflowModalProps) {
         message.success("工作流已更新。");
       }
 
-      router.refresh();
       setOpen(false);
+      router.refresh();
     } catch {
       message.error("工作流更新失败。");
     } finally {

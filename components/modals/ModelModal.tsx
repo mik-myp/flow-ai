@@ -185,11 +185,17 @@ export default function ModelModal({ model }: ModelModalProps) {
 
   const handleSubmit = async (values: ModelFormValues) => {
     setSubmitting(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (!user || userError) {
+        message.error("用户未登录。");
+        return;
+      }
+
       if (mode === "create") {
         const { error } = await supabase.from("model").insert({
           name: values.name,
@@ -197,7 +203,7 @@ export default function ModelModal({ model }: ModelModalProps) {
           model: values.model,
           baseURL: values.baseURL,
           indexedDB_id: indexedDbIdRef.current,
-          user_id: user!.id,
+          user_id: user.id,
         });
 
         if (error) {
@@ -251,8 +257,8 @@ export default function ModelModal({ model }: ModelModalProps) {
         message.success("模型已更新。");
       }
 
-      router.refresh();
       setOpen(false);
+      router.refresh();
     } catch {
       message.error("模型更新失败。");
     } finally {

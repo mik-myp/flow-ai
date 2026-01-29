@@ -13,8 +13,13 @@ function WorkFlowCard({ item }: { item: IWorkFlow }) {
   const router = useRouter();
   const supabase = createClient();
   const [popconfirmOpen, setPopconfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    if (isDeleting) {
+      return;
+    }
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from("work_flow")
@@ -25,8 +30,11 @@ function WorkFlowCard({ item }: { item: IWorkFlow }) {
       }
       message.success("工作流已删除。");
       router.refresh();
+      setPopconfirmOpen(false);
     } catch {
       message.error("删除失败。");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -78,6 +86,7 @@ function WorkFlowCard({ item }: { item: IWorkFlow }) {
               title="确认删除该工作流？"
               open={popconfirmOpen}
               onOpenChange={setPopconfirmOpen}
+              okButtonProps={{ loading: isDeleting }}
               onConfirm={(event) => {
                 event?.stopPropagation();
                 handleDelete();
@@ -90,6 +99,8 @@ function WorkFlowCard({ item }: { item: IWorkFlow }) {
                 type="text"
                 size="small"
                 icon={<Trash size={16} />}
+                loading={isDeleting}
+                disabled={isDeleting}
                 className="text-slate-500 hover:text-rose-500"
                 onClick={(event) => event.stopPropagation()}
               />
