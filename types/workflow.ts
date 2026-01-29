@@ -57,17 +57,6 @@ export interface IWorkFlowState {
 export type FlowNodeType = "textInput" | "generateText" | "generateImage";
 
 /** 基础节点数据类型 */
-export interface BaseNodeMeta extends Record<string, unknown> {
-  icon: string;
-  title: string;
-  description: string;
-  settingFidlds: {
-    name: string;
-    type: string;
-    required: boolean;
-    label: string;
-  }[];
-}
 
 export interface BaseNodeData extends Record<string, unknown> {
   title: string;
@@ -78,40 +67,3 @@ export interface BaseNodeData extends Record<string, unknown> {
     imageModel?: string;
   };
 }
-
-/** 文本输入节点数据类型 */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TextInputFlowNodeData extends BaseNodeData {}
-
-/** 生成文本节点数据类型 */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface GenerateTextFlowNodeData extends BaseNodeData {}
-
-/** 生成图像节点数据类型 */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface GenerateImageFlowNodeData extends BaseNodeData {}
-
-export type FlowNodeData =
-  | TextInputFlowNodeData
-  | GenerateTextFlowNodeData
-  | GenerateImageFlowNodeData;
-
-export type TextInputFlowNode = Node<TextInputFlowNodeData, "textInput">;
-
-export type GenerateTextFlowNode = Node<
-  GenerateTextFlowNodeData,
-  "generateText"
->;
-export type GenerateImageFlowNode = Node<
-  GenerateImageFlowNodeData,
-  "generateImage"
->;
-
-export type FlowNode =
-  | TextInputFlowNode
-  | GenerateTextFlowNode
-  | GenerateImageFlowNode;
-
-export type NodeMetaValue = Omit<Node<BaseNodeData>, "position"> & {
-  meta: BaseNodeMeta;
-};

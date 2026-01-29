@@ -1,14 +1,33 @@
-import { nodeMeta } from "@/lib/workflows";
-import { FlowNodeType } from "@/types/workflow";
+import { nodeMeta, nodeTypes } from "@/lib/workflows";
+import { BaseNodeData, FlowNodeType } from "@/types/workflow";
+import { NodeProps, Node } from "@xyflow/react";
 import React from "react";
-import TextInputNode from "./TextInputNode";
 
 const PreviewNode = ({ type }: { type: FlowNodeType }) => {
   const node = nodeMeta[type];
 
   if (!node || !type) return null;
 
-  if (type === "textInput") return <TextInputNode data={node} />;
+  const Component = nodeTypes[type] as React.ComponentType<
+    NodeProps<Node<BaseNodeData, FlowNodeType>>
+  >;
+
+  return (
+    <Component
+      id=""
+      type={type}
+      data={node.data}
+      selectable={false}
+      selected={false}
+      dragging={false}
+      deletable={false}
+      draggable={false}
+      zIndex={1}
+      isConnectable={false}
+      positionAbsoluteX={0}
+      positionAbsoluteY={0}
+    />
+  );
 };
 
 export default PreviewNode;

@@ -1,28 +1,24 @@
-import type { NodeProps } from "@xyflow/react";
+import type { NodeProps, Node } from "@xyflow/react";
 import { Handle, Position } from "@xyflow/react";
 import BaseNode from "./BaseNode";
 import NodeField from "./NodeField";
-import { GenerateTextFlowNode } from "@/types/workflow";
+import { BaseNodeData } from "@/types/workflow";
 
-const GenerateTextNode = ({
-  data,
-  isPreview,
-  ...rest
-}: NodeProps<GenerateTextFlowNode> & {
-  isPreview?: boolean;
-}) => {
+const GenerateTextNode = (
+  props: NodeProps<Node<BaseNodeData, "generateText">>,
+) => {
   return (
-    <BaseNode {...rest} data={data} icon={"+1"} selected={rest.selected}>
+    <BaseNode {...props}>
       <NodeField
         label="文本模型"
-        content={data.settingData?.textModel as string}
+        content={props.data.settingData?.textModel as string}
       />
-      {isPreview ? null : (
+      {props.id ? (
         <>
           <Handle type="target" position={Position.Left} />
           <Handle type="source" position={Position.Right} />
         </>
-      )}
+      ) : null}
     </BaseNode>
   );
 };

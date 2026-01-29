@@ -2,9 +2,25 @@ import FlowEdge from "@/components/workflows/edges/FlowEdge";
 import GenerateImageNode from "@/components/workflows/nodes/GenerateImageNode";
 import GenerateTextNode from "@/components/workflows/nodes/GenerateTextNode";
 import TextInputNode from "@/components/workflows/nodes/TextInputNode";
-import { FlowNodeType, NodeMetaValue } from "@/types/workflow";
+import { BaseNodeData, FlowNodeType } from "@/types/workflow";
+import type { Node } from "@xyflow/react";
 
-export const nodeMeta: Record<FlowNodeType, NodeMetaValue> = {
+export const nodeMeta: Record<
+  FlowNodeType,
+  Omit<Node<BaseNodeData>, "position"> & {
+    meta: {
+      icon: string;
+      title: string;
+      description: string;
+      settingFidlds: {
+        name: string;
+        type: string;
+        required: boolean;
+        label: string;
+      }[];
+    };
+  }
+> = {
   textInput: {
     id: "textInput",
     meta: {
