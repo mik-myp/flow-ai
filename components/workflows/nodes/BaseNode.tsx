@@ -3,7 +3,7 @@ import EmEmoji from "@/components/emoji/EmEmoji";
 import { Trash } from "lucide-react";
 import React, { useMemo } from "react";
 import { Button } from "antd";
-import { Node, NodeProps } from "@xyflow/react";
+import { Edge, Node, NodeProps, useReactFlow } from "@xyflow/react";
 import { BaseNodeData, FlowNodeType } from "@/types/workflow";
 import { nodeMeta } from "@/lib/workflows";
 
@@ -12,9 +12,12 @@ const BaseNode = ({
   selected,
   data,
   type,
+  id,
 }: NodeProps<Node<BaseNodeData, FlowNodeType>> & {
   children: React.ReactNode;
 }) => {
+  const { deleteElements } = useReactFlow<Node, Edge>();
+
   const nodeData = useMemo(() => {
     const node = nodeMeta[type];
     return {
@@ -26,8 +29,7 @@ const BaseNode = ({
   return (
     <div
       className={clsx(
-        "w-87.5 rounded-md border bg-white text-black shadow-sm hover:border-blue-500 hover:shadow-md hover:ring-1 hover:ring-blue-500",
-        "transition-shadow",
+        "group w-87.5 rounded-md border bg-white text-black shadow-sm transition-shadow hover:border-blue-500 hover:shadow-md hover:ring-1 hover:ring-blue-500",
         selected && "border-blue-500 shadow-md ring-2 ring-blue-500",
       )}
     >
@@ -38,6 +40,7 @@ const BaseNode = ({
           icon={<Trash size={16} />}
           type="text"
           className="nodrag nopan"
+          onClick={() => deleteElements({ nodes: [{ id }] })}
         />
       </div>
       <div className="flex flex-col gap-y-2 p-3">{children}</div>

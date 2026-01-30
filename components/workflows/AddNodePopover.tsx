@@ -2,10 +2,11 @@ import { nodeCatalog } from "@/lib/workflows";
 import { Popover } from "antd";
 import { useMemo, useState, type ReactNode } from "react";
 import EmEmoji from "../emoji/EmEmoji";
+import { FlowNodeType } from "@/types/workflow";
 
 type AddNodePopoverProps = {
   children: ReactNode;
-  onSelect: (type: string) => void;
+  onSelect: (type: FlowNodeType) => void;
   onOpenChange?: (open: boolean) => void;
 };
 

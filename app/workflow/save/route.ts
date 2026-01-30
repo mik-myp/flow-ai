@@ -3,8 +3,6 @@ import { TEdge, TNode } from "@/types/workflow";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  console.log("🚀 ~ route.ts:7 ~ POST ~ req:", req);
-
   const { workflowId, nodes, edges } = (await req.json()) as {
     workflowId: string;
     nodes: TNode[];
@@ -12,7 +10,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (!workflowId) {
-    return NextResponse.json({ error: "缺少工作流ID" }, { status: 400 });
+    return NextResponse.json({ message: "缺少工作流ID" }, { status: 400 });
   }
 
   const supabase = await createClient();
@@ -23,7 +21,36 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user || userError) {
-    return NextResponse.json({ error: "用户未登录" }, { status: 401 });
+    return NextResponse.json({ message: "用户未登录" }, { status: 401 });
+  }
+
+  // 1. 首先获取数据库中当前工作流的所有节点和边ID
+  const [existingNodes, existingEdges] = await Promise.all([
+    supabase.from("node").select("id").eq("work_flow_id", workflowId),
+    supabase.from("edge").select("id").eq("work_flow_id", workflowId),
+  ]);
+
+  const existingNodeIds = existingNodes.data?.map((n) => n.id) || [];
+  const existingEdgeIds = existingEdges.data?.map((e) => e.id) || [];
+
+  // 2. 计算需要删除的ID
+  const currentNodeIds = nodes.map((n) => n.id);
+  const currentEdgeIds = edges.map((e) => e.id);
+
+  const nodesToDelete = existingNodeIds.filter(
+    (id) => !currentNodeIds.includes(id),
+  );
+  const edgesToDelete = existingEdgeIds.filter(
+    (id) => !currentEdgeIds.includes(id),
+  );
+
+  // 3. 执行删除（先删边，再删节点，因为边可能依赖节点）
+  if (edgesToDelete.length > 0) {
+    await supabase.from("edge").delete().in("id", edgesToDelete);
+  }
+
+  if (nodesToDelete.length > 0) {
+    await supabase.from("node").delete().in("id", nodesToDelete);
   }
 
   const nodeParams = nodes.map((node: TNode) => {
@@ -37,8 +64,6 @@ export async function POST(req: NextRequest) {
       work_flow_id: workflowId,
     };
   });
-
-  console.log("🚀 ~ route.ts:41 ~ POST ~ nodeParams:", nodeParams);
 
   const edgeParams = edges.map((edge: TEdge) => {
     const { id, updated_at, source, sourceHandle, target, targetHandle, data } =
@@ -55,19 +80,13 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  console.log("🚀 ~ route.ts:59 ~ POST ~ edgeParams:", edgeParams);
-
   const [nodeRes, edgeRes] = await Promise.all([
     supabase.from("node").upsert(nodeParams, { onConflict: "id" }),
     supabase.from("edge").upsert(edgeParams, { onConflict: "id" }),
   ]);
 
-  console.log("🚀 ~ route.ts:68 ~ POST ~ edgeRes:", edgeRes);
-
-  console.log("🚀 ~ route.ts:68 ~ POST ~ nodeRes:", nodeRes);
-
   if (nodeRes.error || edgeRes.error) {
-    return NextResponse.json({ error: "保存工作流失败" }, { status: 500 });
+    return NextResponse.json({ message: "保存工作流失败" }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -94,11 +94,26 @@ export const nodeMeta: Record<
   },
 };
 
-export const nodeCatalog = Object.keys(nodeMeta).map((type) => {
+export const nodeCatalog: (Omit<
+  Node<BaseNodeData, FlowNodeType>,
+  "position"
+> & {
+  meta: {
+    icon: string;
+    title: string;
+    description: string;
+    settingFidlds: {
+      name: string;
+      type: string;
+      required: boolean;
+      label: string;
+    }[];
+  };
+})[] = Object.keys(nodeMeta).map((type) => {
   const nodeMetaItem = nodeMeta[type as FlowNodeType];
   return {
     ...nodeMetaItem,
-    type: type,
+    type: type as FlowNodeType,
   };
 });
 

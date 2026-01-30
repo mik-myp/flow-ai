@@ -3,7 +3,7 @@
 @import '@xyflow/react/dist/style.css';
 
 @import 'tailwindcss';
-/*
+
 .react-flow__handle:after {
   content: "";
   --tw-bg-opacity: 1;
@@ -11,9 +11,13 @@
   width: 2px;
   height: 10px;
   display: block;
-  margin: 11px 0 8px 15px;
+  margin: 7px 0 7px 13px;
 }
 
 .react-flow__handle-left:after {
-  margin: 11px 0 8px 13px;
-} */
+  margin: 7px 0 7px 9px;
+}
+
+.react-flow__node.selected .lucide-plus {
+  opacity: 100;
+}

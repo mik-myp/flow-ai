@@ -52,7 +52,6 @@ const SiteAvatar = () => {
       if (error) throw error;
       setUserInfo(data?.claims.user_metadata as IUser);
     } catch {
-      console.log("获取用户信息失败");
     } finally {
       setLoading(false);
     }

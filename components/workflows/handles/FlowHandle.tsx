@@ -30,14 +30,12 @@ const FlowHandle = ({ handles }: { handles: IHandle | (IHandle | null)[] }) => {
               }
             >
               <Plus
-                className="pointer-events-none absolute top-1 right-1.5 flex h-4 w-4 items-center justify-center rounded-2xl bg-[#2970ff] transition-all"
+                className="pointer-events-none absolute top-1 right-1.5 flex h-4 w-4 items-center justify-center rounded-2xl bg-[#2970ff] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 size={10}
                 color="#fff"
               />
             </Handle>
-            <label htmlFor="" className="px-3">
-              {theHandles[0].label}
-            </label>
+            <label className="px-3">{theHandles[0].label}</label>
           </>
         )}
       </div>
@@ -54,14 +52,12 @@ const FlowHandle = ({ handles }: { handles: IHandle | (IHandle | null)[] }) => {
               }
             >
               <Plus
-                className="pointer-events-none absolute top-1 right-0.75 flex h-4 w-4 items-center justify-center rounded-2xl bg-[#2970ff] transition-all"
+                className="pointer-events-none absolute top-1 right-0.75 flex h-4 w-4 items-center justify-center rounded-2xl bg-[#2970ff] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 size={10}
                 color="#fff"
               />
             </Handle>
-            <label htmlFor="" className="px-3">
-              {theHandles[1].label}
-            </label>
+            <label className="px-3">{theHandles[1].label}</label>
           </>
         )}
       </div>

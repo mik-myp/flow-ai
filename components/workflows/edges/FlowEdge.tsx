@@ -12,14 +12,11 @@ import {
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import AddNodePopover from "../AddNodePopover";
+import { FlowNodeType, TEdge, TNode } from "@/types/workflow";
+import { nodeCatalog } from "@/lib/workflows";
+import { v4 as uuidv4 } from "uuid";
 
 type FlowEdgeData = {
-  onStartAddNode?: (type: string) => void;
-  onInsertNode?: (payload: {
-    edgeId: string;
-    type: string;
-    position: { x: number; y: number };
-  }) => void;
   isHovered?: boolean;
 };
 
@@ -54,7 +51,8 @@ const FlowEdge = ({
   selected,
   data,
 }: EdgeProps<Edge<FlowEdgeData>>) => {
-  const { deleteElements } = useReactFlow<Node, Edge>();
+  const { deleteElements, getEdges, addNodes, addEdges, updateEdge } =
+    useReactFlow<TNode, TEdge>();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const sourceOffset = getHandleOffset(sourcePosition, HANDLE_OFFSET);
   const targetOffset = getHandleOffset(targetPosition, HANDLE_OFFSET);
@@ -68,8 +66,71 @@ const FlowEdge = ({
     targetPosition,
   });
 
-  const onStartAddNode = data?.onStartAddNode;
-  const onInsertNode = data?.onInsertNode;
+  const handleInsertNode = ({
+    edgeId,
+    type,
+    position,
+  }: {
+    edgeId: string;
+    type: FlowNodeType;
+    position: { x: number; y: number };
+  }) => {
+    const edges = getEdges();
+    const targetEdge = edges.find((edge) => edge.id === edgeId);
+    const newNodeId = uuidv4();
+
+    const newEdgeId = uuidv4();
+
+    if (!targetEdge) return;
+
+    const definition = nodeCatalog.find((item) => item.type === type);
+    if (!definition) {
+      return;
+    }
+
+    const newNode: TNode = {
+      id: newNodeId,
+      type,
+      position,
+      data: { ...definition.data },
+      updated_at: new Date().toISOString(),
+    };
+
+    addNodes(newNode);
+    // 遵循 左改右删
+    if (type === "textInput") {
+      deleteElements({ edges: [{ id: edgeId }] });
+      addEdges({
+        id: newEdgeId,
+        type: "flow",
+        updated_at: new Date().toISOString(),
+        target: newNodeId,
+        targetHandle: "text",
+        source: targetEdge.source,
+        sourceHandle: targetEdge.sourceHandle,
+      });
+    } else if (type === "generateText") {
+      updateEdge(edgeId, {
+        source: newNodeId,
+        sourceHandle: "system",
+      });
+      addEdges({
+        id: newEdgeId,
+        type: "flow",
+        updated_at: new Date().toISOString(),
+        target: newNodeId,
+        targetHandle: "result",
+        source: targetEdge.source,
+        sourceHandle: targetEdge.sourceHandle,
+      });
+    } else if (type === "generateImage") {
+      updateEdge(edgeId, {
+        source: newNodeId,
+        sourceHandle: "prompt",
+      });
+    }
+  };
+
   const isHovered = Boolean(data?.isHovered);
   const showControls = isHovered || isPopoverOpen;
 
@@ -97,15 +158,11 @@ const FlowEdge = ({
         >
           <AddNodePopover
             onSelect={(type) => {
-              if (onInsertNode) {
-                onInsertNode({
-                  edgeId: id,
-                  type,
-                  position: { x: labelX, y: labelY },
-                });
-                return;
-              }
-              onStartAddNode?.(type);
+              handleInsertNode({
+                edgeId: id,
+                type,
+                position: { x: labelX, y: labelY },
+              });
             }}
             onOpenChange={setIsPopoverOpen}
           >

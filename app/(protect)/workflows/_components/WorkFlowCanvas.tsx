@@ -4,9 +4,17 @@ import FlowControls from "@/components/workflows/FlowControls";
 import PreviewNode from "@/components/workflows/nodes/PreviewNode";
 
 import { edgeTypes, nodeCatalog, nodeTypes } from "@/lib/workflows";
-import useWorkFlow from "@/lib/workflows/store";
 import type { FlowNodeType, IWorkFlow, TEdge, TNode } from "@/types/workflow";
-import type { Edge, Node, ReactFlowInstance } from "@xyflow/react";
+import {
+  Edge,
+  Node,
+  ReactFlowInstance,
+  useNodesState,
+  useEdgesState,
+  useReactFlow,
+  addEdge,
+  Connection,
+} from "@xyflow/react";
 import { Background, ReactFlow } from "@xyflow/react";
 import { message } from "antd";
 import React, {
@@ -38,8 +46,8 @@ const WorkFlowCanvas = ({
   workflowId: string;
   workflowDetail: {
     workflow: IWorkFlow;
-    nodes: Node[];
-    edges: Edge[];
+    nodes: TNode[];
+    edges: TEdge[];
   };
 }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -52,16 +60,14 @@ const WorkFlowCanvas = ({
     null,
   );
 
-  const {
-    nodes,
-    edges,
-    initWorkflow,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    clearWorkflow,
-    addNode,
-  } = useWorkFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState<TNode>(
+    workflowDetail.nodes,
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState<TEdge>(
+    workflowDetail.edges,
+  );
+
+  const { addNodes, addEdges } = useReactFlow();
 
   /** 画布模式：指针模式 | 手模式 */
   const [interactionMode, setInteractionMode] = useState<"pointer" | "hand">(
@@ -80,7 +86,44 @@ const WorkFlowCanvas = ({
   } | null>(null);
 
   /** 是否全屏 */
+
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  /** 当前激活的节点id */
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+
+  /** 当前悬浮的边 */
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+
+  const edgesWithMeta = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        type: "flow",
+        data: {
+          ...(edge.data ?? {}),
+          isHovered: edge.id === hoveredEdgeId,
+        },
+      })),
+    [edges, hoveredEdgeId],
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    [setEdges],
+  );
+
+  const handleNodeClick = useCallback((event: MouseEvent, node: TNode) => {
+    setActiveNodeId(node.id);
+  }, []);
+
+  const handleEdgeMouseEnter = useCallback((_event: MouseEvent, edge: Edge) => {
+    setHoveredEdgeId(edge.id);
+  }, []);
+
+  const handleEdgeMouseLeave = useCallback(() => {
+    setHoveredEdgeId(null);
+  }, []);
 
   // 创建防抖后的保存函数
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -104,7 +147,6 @@ const WorkFlowCanvas = ({
               edges: currentEdges,
             }),
           });
-          console.log("response", response);
 
           if (!response.ok) {
             message.error("保存工作流失败");
@@ -119,13 +161,6 @@ const WorkFlowCanvas = ({
     ),
     [],
   );
-
-  // 当nodes或edges变化时，调用防抖保存函数
-  useEffect(() => {
-    if (nodes.length > 0 || edges.length > 0) {
-      debouncedSaveWorkflow(workflowId, nodes, edges);
-    }
-  }, [nodes, edges, debouncedSaveWorkflow, workflowId]);
 
   const renderPreviewNode = useMemo(() => {
     if (pendingAddNodeType && cursorPosition) {
@@ -203,11 +238,11 @@ const WorkFlowCanvas = ({
         position,
         data: { ...definition.data },
       };
-      addNode(newNode);
+      addNodes(newNode);
       setPendingAddNodeType(null);
       setCursorPosition(null);
     },
-    [pendingAddNodeType, addNode],
+    [pendingAddNodeType, addNodes],
   );
 
   /** 跟踪鼠标移动以定位预览节点。 */
@@ -276,20 +311,12 @@ const WorkFlowCanvas = ({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  // 初始化工作流数据
+  // 当nodes或edges变化时，调用防抖保存函数
   useEffect(() => {
-    initWorkflow(
-      workflowId,
-      workflowDetail.workflow,
-      workflowDetail.nodes,
-      workflowDetail.edges,
-    );
-
-    // 组件卸载时清空数据
-    return () => {
-      clearWorkflow();
-    };
-  }, [workflowId, workflowDetail, initWorkflow, clearWorkflow]);
+    if (nodes.length > 0 || edges.length > 0) {
+      debouncedSaveWorkflow(workflowId, nodes, edges);
+    }
+  }, [nodes, edges, debouncedSaveWorkflow, workflowId]);
 
   return (
     <div
@@ -302,7 +329,7 @@ const WorkFlowCanvas = ({
     >
       <ReactFlow<TNode, TEdge>
         nodes={nodes}
-        edges={edges}
+        edges={edgesWithMeta}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -310,6 +337,9 @@ const WorkFlowCanvas = ({
         edgeTypes={edgeTypes}
         onPaneClick={handlePaneClick}
         onInit={handleInit}
+        onNodeClick={handleNodeClick}
+        onEdgeMouseEnter={handleEdgeMouseEnter}
+        onEdgeMouseLeave={handleEdgeMouseLeave}
         nodesDraggable={interactionMode === "pointer"}
         elementsSelectable={interactionMode === "pointer"}
         panOnDrag={interactionMode === "hand"}
