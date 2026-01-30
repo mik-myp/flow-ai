@@ -22,7 +22,6 @@ import {
   Connection,
 } from "@xyflow/react";
 import { Background, ReactFlow } from "@xyflow/react";
-import { message } from "antd";
 import React, {
   useCallback,
   useEffect,
@@ -32,18 +31,7 @@ import React, {
   type MouseEvent,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
-
-// 添加防抖函数
-const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
-  func: T,
-  delay: number,
-): ((...args: Parameters<T>) => void) => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
+import { useDebounceFn, useUpdateEffect } from "ahooks";
 
 const WorkFlowCanvas = ({
   workflowId,
@@ -161,41 +149,27 @@ const WorkFlowCanvas = ({
     setHoveredEdgeId(null);
   }, []);
 
-  // 创建防抖后的保存函数
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSaveWorkflow = useCallback(
-    // eslint-disable-next-line react-hooks/use-memo
-    debounce(
-      async (
-        currentWorkflowId: string,
-        currentNodes: Node[],
-        currentEdges: Edge[],
-      ) => {
-        try {
-          const response = await fetch("/workflow/save", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              workflowId: currentWorkflowId,
-              nodes: currentNodes,
-              edges: currentEdges,
-            }),
-          });
-
-          if (!response.ok) {
-            message.error("保存工作流失败");
-          } else {
-            message.success("工作流保存成功");
-          }
-        } catch {
-          message.error("保存工作流时发生错误");
-        }
-      },
-      5000,
-    ),
-    [],
+  const { run } = useDebounceFn(
+    async (
+      currentWorkflowId: string,
+      currentNodes: Node[],
+      currentEdges: Edge[],
+    ) => {
+      await fetch("/workflow/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workflowId: currentWorkflowId,
+          nodes: currentNodes,
+          edges: currentEdges,
+        }),
+      });
+    },
+    {
+      wait: 5000,
+    },
   );
 
   const renderPreviewNode = useMemo(() => {
@@ -363,19 +337,14 @@ const WorkFlowCanvas = ({
     };
   }, []);
 
-  // 当nodes或edges变化时，调用防抖保存函数
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (
       (nodes.length > 0 || edges.length > 0) &&
       reactFlowInstanceRef.current
     ) {
-      if (!isMounted.current) {
-        isMounted.current = true;
-      } else {
-        debouncedSaveWorkflow(workflowId, nodes, edges);
-      }
+      run(workflowId, nodes, edges);
     }
-  }, [nodes, edges, debouncedSaveWorkflow, workflowId]);
+  }, [nodes, edges, run, workflowId]);
 
   return (
     <div

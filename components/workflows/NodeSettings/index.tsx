@@ -3,7 +3,7 @@ import { Drawer, Form, Input, Select, type SelectProps } from "antd";
 import { memo, useCallback, useEffect, useMemo } from "react";
 
 import { X } from "lucide-react";
-import EmEmoji from "@/components/emoji/EmEmoji";
+import NodeIcon from "@/components/workflows/NodeIcon";
 import { nodeMeta } from "@/lib/workflows/constant";
 import { BaseNodeData, FlowNodeType, TNode } from "@/types/workflow";
 import { useModels } from "@/lib/hooks/useModels";
@@ -34,7 +34,7 @@ const NodeSettingsDrawer = ({
   const nodeData = useMemo(() => {
     if (!node?.type) {
       return {
-        icon: "",
+        icon: null,
         title: "",
         description: "",
         settingData: {},
@@ -44,7 +44,7 @@ const NodeSettingsDrawer = ({
     const { meta } = nodeMeta[node.type as FlowNodeType];
 
     return {
-      icon: meta?.icon ?? "",
+      icon: meta?.icon ?? null,
       title: node.data.title ?? meta.title,
       description: node.data.description ?? "",
       settingData: node?.data?.settingData ?? {},
@@ -104,7 +104,9 @@ const NodeSettingsDrawer = ({
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center gap-3">
             <span className="relative flex h-6 w-6 shrink-0 grow-0 items-center justify-center overflow-hidden rounded-lg border-[0.5px] border-[#10182814] text-[14px]">
-              <EmEmoji id={nodeData.icon} />
+              {nodeData.icon ? (
+                <NodeIcon icon={nodeData.icon} size={14} />
+              ) : null}
             </span>
             <Input
               type="text"

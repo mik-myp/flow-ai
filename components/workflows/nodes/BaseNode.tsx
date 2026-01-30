@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import EmEmoji from "@/components/emoji/EmEmoji";
+import NodeIcon from "@/components/workflows/NodeIcon";
 import { Trash } from "lucide-react";
 import React, { useMemo } from "react";
 import { Button } from "antd";
@@ -29,21 +29,25 @@ const BaseNode = ({
   return (
     <div
       className={clsx(
-        "group w-87.5 rounded-md border bg-white text-black shadow-sm transition-shadow hover:border-blue-500 hover:shadow-md hover:ring-1 hover:ring-blue-500",
+        "group w-87.5 rounded-xl border border-slate-200/80 bg-white text-slate-900 shadow-sm transition-colors duration-150 hover:border-blue-500 hover:shadow-md",
         selected && "border-blue-500 shadow-md ring-2 ring-blue-500",
       )}
     >
-      <div className="flex flex-row items-center justify-between gap-2 border-b px-3 py-2">
-        <EmEmoji id={nodeData.icon} size={20} />
-        <div className="flex-1">{nodeData.title}</div>
+      <div className="flex flex-row items-center justify-between gap-2 rounded-t-xl border-b border-slate-200/70 bg-slate-50/60 px-3 py-2.5">
+        <NodeIcon icon={nodeData.icon} size={18} />
+        <div className="flex-1 truncate text-sm font-medium text-slate-900">
+          {nodeData.title}
+        </div>
         <Button
           icon={<Trash size={16} />}
           type="text"
-          className="nodrag nopan"
+          className="nodrag nopan text-slate-500 transition-colors hover:text-rose-500"
           onClick={() => deleteElements({ nodes: [{ id }] })}
         />
       </div>
-      <div className="flex flex-col gap-y-2 p-3">{children}</div>
+      <div className="flex flex-col gap-y-2.5 rounded-b-xl px-3 py-2.5 text-xs text-slate-700">
+        {children}
+      </div>
     </div>
   );
 };
