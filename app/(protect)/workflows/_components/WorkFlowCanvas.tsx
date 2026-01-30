@@ -2,16 +2,22 @@
 
 import FlowControls from "@/components/workflows/FlowControls";
 import PreviewNode from "@/components/workflows/nodes/PreviewNode";
+import NodeSettingsDrawer from "@/components/workflows/NodeSettings";
 
-import { edgeTypes, nodeCatalog, nodeTypes } from "@/lib/workflows";
-import type { FlowNodeType, IWorkFlow, TEdge, TNode } from "@/types/workflow";
+import { edgeTypes, nodeCatalog, nodeTypes } from "@/lib/workflows/constant";
+import type {
+  BaseNodeData,
+  FlowNodeType,
+  IWorkFlow,
+  TEdge,
+  TNode,
+} from "@/types/workflow";
 import {
   Edge,
   Node,
   ReactFlowInstance,
   useNodesState,
   useEdgesState,
-  useReactFlow,
   addEdge,
   Connection,
 } from "@xyflow/react";
@@ -52,6 +58,8 @@ const WorkFlowCanvas = ({
 }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
+  const isMounted = useRef(false);
+
   /** 鼠标移动时的位置  */
   const pointPosRef = useRef<{ x: number; y: number } | null>(null);
   const previewRafRef = useRef<number | null>(null);
@@ -67,17 +75,14 @@ const WorkFlowCanvas = ({
     workflowDetail.edges,
   );
 
-  const { addNodes, addEdges } = useReactFlow();
-
   /** 画布模式：指针模式 | 手模式 */
   const [interactionMode, setInteractionMode] = useState<"pointer" | "hand">(
     "pointer",
   );
 
   /** 等待添加到画布的节点类型 */
-  const [pendingAddNodeType, setPendingAddNodeType] = useState<string | null>(
-    null,
-  );
+  const [pendingAddNodeType, setPendingAddNodeType] =
+    useState<FlowNodeType | null>(null);
 
   /** 鼠标位置 */
   const [cursorPosition, setCursorPosition] = useState<{
@@ -94,6 +99,11 @@ const WorkFlowCanvas = ({
 
   /** 当前悬浮的边 */
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+
+  const activeNode = useMemo(
+    () => nodes.find((node) => node.id === activeNodeId),
+    [activeNodeId, nodes],
+  );
 
   const edgesWithMeta = useMemo(
     () =>
@@ -112,6 +122,32 @@ const WorkFlowCanvas = ({
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges],
   );
+
+  const handleUpdateNodeData = useCallback(
+    (nodeId: string, data: Partial<BaseNodeData>) => {
+      setNodes((prev) => {
+        const now = new Date().toISOString();
+        return prev.map((node) => {
+          if (node.id !== nodeId) {
+            return node;
+          }
+          return {
+            ...node,
+            data: {
+              ...(node.data as BaseNodeData),
+              ...data,
+            },
+            updated_at: now,
+          };
+        });
+      });
+    },
+    [setNodes],
+  );
+
+  const handleEdgeClick = useCallback((event: MouseEvent, edge: Edge) => {
+    setActiveNodeId(null);
+  }, []);
 
   const handleNodeClick = useCallback((event: MouseEvent, node: TNode) => {
     setActiveNodeId(node.id);
@@ -198,7 +234,7 @@ const WorkFlowCanvas = ({
 
   /** 进入所选节点类型的放置模式。 */
   const handleStartAddNode = useCallback(
-    (type: string) => {
+    (type: FlowNodeType) => {
       setInteractionMode("pointer");
       setPendingAddNodeType(type);
       const lastPoint = pointPosRef.current;
@@ -216,9 +252,11 @@ const WorkFlowCanvas = ({
   const handlePaneClick = useCallback(
     (e: MouseEvent) => {
       const instance = reactFlowInstanceRef.current;
+      setActiveNodeId(null);
       if (!pendingAddNodeType || !instance) {
         return;
       }
+
       const definition = nodeCatalog.find(
         (item) => item.type === pendingAddNodeType,
       );
@@ -226,23 +264,40 @@ const WorkFlowCanvas = ({
         return;
       }
 
+      const sameTypeNodes = nodes.filter(
+        (node) => node.type === pendingAddNodeType,
+      );
+
       /** 将屏幕坐标转换为画布坐标用于放置。 */
       const position = instance.screenToFlowPosition({
         x: e.clientX,
         y: e.clientY,
       });
 
-      const newNode: Node = {
+      const baseData = {
+        ...definition.data,
+        title: `${definition.meta.title} ${sameTypeNodes.length + 1}`,
+      } as BaseNodeData;
+
+      const settingData = baseData.settingData
+        ? { ...baseData.settingData }
+        : {};
+
+      const newNode: TNode = {
         id: uuidv4(),
         type: pendingAddNodeType,
         position,
-        data: { ...definition.data },
+        data: {
+          ...baseData,
+          settingData,
+        },
+        updated_at: new Date().toISOString(),
       };
-      addNodes(newNode);
+      setNodes((prev) => [...prev, newNode]);
       setPendingAddNodeType(null);
       setCursorPosition(null);
     },
-    [pendingAddNodeType, addNodes],
+    [pendingAddNodeType, setNodes, nodes],
   );
 
   /** 跟踪鼠标移动以定位预览节点。 */
@@ -296,25 +351,29 @@ const WorkFlowCanvas = ({
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (previewRafRef.current !== null) {
-        cancelAnimationFrame(previewRafRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
     const handleFullscreenChange = () =>
       setIsFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
+    return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      if (previewRafRef.current !== null) {
+        cancelAnimationFrame(previewRafRef.current);
+      }
+      isMounted.current = false;
+    };
   }, []);
 
   // 当nodes或edges变化时，调用防抖保存函数
   useEffect(() => {
-    if (nodes.length > 0 || edges.length > 0) {
-      debouncedSaveWorkflow(workflowId, nodes, edges);
+    if (
+      (nodes.length > 0 || edges.length > 0) &&
+      reactFlowInstanceRef.current
+    ) {
+      if (!isMounted.current) {
+        isMounted.current = true;
+      } else {
+        debouncedSaveWorkflow(workflowId, nodes, edges);
+      }
     }
   }, [nodes, edges, debouncedSaveWorkflow, workflowId]);
 
@@ -338,6 +397,7 @@ const WorkFlowCanvas = ({
         onPaneClick={handlePaneClick}
         onInit={handleInit}
         onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
         onEdgeMouseEnter={handleEdgeMouseEnter}
         onEdgeMouseLeave={handleEdgeMouseLeave}
         nodesDraggable={interactionMode === "pointer"}
@@ -357,6 +417,13 @@ const WorkFlowCanvas = ({
         />
       </ReactFlow>
       {renderPreviewNode}
+      {activeNode && (
+        <NodeSettingsDrawer
+          node={activeNode}
+          onClose={() => setActiveNodeId(null)}
+          onUpdateNode={handleUpdateNodeData}
+        />
+      )}
     </div>
   );
 };

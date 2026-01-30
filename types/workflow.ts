@@ -20,11 +20,17 @@ export interface IWorkFlow {
   user_id: string;
 }
 
-export type TNode = Node & {
+export type TNode<
+  NodeData extends Record<string, unknown> = BaseNodeData,
+  NodeType extends string | undefined = FlowNodeType,
+> = Node<NodeData, NodeType> & {
   updated_at: string;
 };
 
-export type TEdge = Edge & {
+export type TEdge<
+  EdgeData extends Record<string, unknown> = Record<string, unknown>,
+  EdgeType extends string | undefined = string | undefined,
+> = Edge<EdgeData, EdgeType> & {
   updated_at: string;
 };
 
@@ -72,8 +78,14 @@ export interface BaseNodeData extends Record<string, unknown> {
   description?: string;
   settingData?: {
     input?: string;
-    textModel?: string;
-    imageModel?: string;
+    textModel?: {
+      label: string;
+      value: string;
+    };
+    imageModel?: {
+      label: string;
+      value: string;
+    };
   };
 }
 

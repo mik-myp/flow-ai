@@ -1,32 +1,35 @@
 "use client";
-import { Drawer, Form, Input, Select } from "antd";
-import { useCallback, useEffect, useMemo } from "react";
-import type { Edge, Node } from "@xyflow/react";
-import { useReactFlow } from "@xyflow/react";
+import { Drawer, Form, Input, Select, type SelectProps } from "antd";
+import { memo, useCallback, useEffect, useMemo } from "react";
 
 import { X } from "lucide-react";
 import EmEmoji from "@/components/emoji/EmEmoji";
-import { nodeMeta } from "@/lib/workflows";
-
-type NodeSettingsValues = Record<string, {} | undefined>;
+import { nodeMeta } from "@/lib/workflows/constant";
+import { BaseNodeData, FlowNodeType, TNode } from "@/types/workflow";
+import { useModels } from "@/lib/hooks/useModels";
+import { IModel } from "@/types/model";
 
 type NodeSettingsDrawerProps = {
-  node: Node | null;
-  open: boolean;
+  node: TNode<BaseNodeData> | undefined;
   onClose: () => void;
-  onUpdateNodeData: (nodeId: string, data: Record<string, unknown>) => void;
+  onUpdateNode: (nodeId: string, data: Partial<BaseNodeData>) => void;
 };
 
 const NodeSettingsDrawer = ({
   node,
-  open,
   onClose,
-  onUpdateNodeData,
+  onUpdateNode,
 }: NodeSettingsDrawerProps) => {
-  const { updateNodeData } = useReactFlow<Node, Edge>();
-  const [form] = Form.useForm<NodeSettingsValues>();
+  const { data: models, isLoading: modelsLoading } = useModels<IModel[]>();
 
-  const modelOptions: Array<{ label: string; value: string }> = [];
+  type NodeSettingFormValues = NonNullable<BaseNodeData["settingData"]>;
+  const [form] = Form.useForm<NodeSettingFormValues>();
+
+  const settingFields = useMemo(() => {
+    if (!node?.type) return [];
+
+    return nodeMeta[node.type as FlowNodeType]?.meta.settingFields ?? [];
+  }, [node]);
 
   const nodeData = useMemo(() => {
     if (!node?.type) {
@@ -34,104 +37,65 @@ const NodeSettingsDrawer = ({
         icon: "",
         title: "",
         description: "",
+        settingData: {},
       };
     }
 
-    const meta = nodeMeta[node.type as keyof typeof nodeMeta];
+    const { meta } = nodeMeta[node.type as FlowNodeType];
+
     return {
-      icon: meta?.meta.icon ?? "",
-      title:
-        ((node.data as Record<string, unknown>)?.title as string) ??
-        meta?.meta.title ??
-        "",
-      description:
-        ((node.data as Record<string, unknown>)?.description as string) ?? "",
+      icon: meta?.icon ?? "",
+      title: node.data.title ?? meta.title,
+      description: node.data.description ?? "",
+      settingData: node?.data?.settingData ?? {},
     };
   }, [node]);
 
-  const settingFields = useMemo(() => {
-    if (!node?.type) {
-      return [];
-    }
-    const meta = nodeMeta[node.type as keyof typeof nodeMeta];
-    return meta?.meta.settingFidlds ?? [];
-  }, [node]);
-
-  const settings = useMemo<NodeSettingsValues>(
-    () =>
-      ((node?.data as Record<string, unknown>)?.settingData ??
-        {}) as NodeSettingsValues,
-    [node],
-  );
-
-  useEffect(() => {
-    if (!node) {
-      form.resetFields();
-      return;
-    }
-    form.setFieldsValue(settings);
-  }, [form, node, settings]);
-
   const handleUpdate = useCallback(
-    (patch: Record<string, unknown>) => {
+    (data: Partial<BaseNodeData>) => {
       if (!node) {
         return;
       }
-      updateNodeData(node.id, {
-        ...node.data,
-        ...patch,
-      });
-      onUpdateNodeData(node.id, patch);
+      onUpdateNode(node.id, data);
     },
-    [node, updateNodeData, onUpdateNodeData],
-  );
-
-  const handleSettingsChange = useCallback(
-    (_: Partial<NodeSettingsValues>, allValues: NodeSettingsValues) => {
-      if (!node) {
-        return;
-      }
-      handleUpdate({ settingData: allValues });
-    },
-    [handleUpdate, node],
+    [node, onUpdateNode],
   );
 
   const renderSettingField = useCallback(
     (field: {
       name: string;
       type: string;
-      placeholder?: string;
       required?: boolean;
       optionsSource?: string;
       options?: Array<{ label: string; value: string }>;
+      fieldNames?: SelectProps["fieldNames"];
     }) => {
       if (field.type === "select") {
-        const options =
-          field.optionsSource === "models"
-            ? modelOptions
-            : (field.options ?? []);
+        let selectOptions: SelectProps["options"] = field.options ?? [];
+
+        if (field.optionsSource === "models") {
+          selectOptions = models ? models : [];
+        }
+
         return (
           <Select
-            placeholder={field.placeholder}
-            options={options}
+            options={selectOptions}
             allowClear={!field.required}
+            fieldNames={field.fieldNames}
+            loading={modelsLoading}
+            labelInValue
           />
         );
       }
       if (field.type === "textarea") {
-        return (
-          <Input.TextArea
-            placeholder={field.placeholder}
-            autoSize={{ maxRows: 6 }}
-          />
-        );
+        return <Input.TextArea autoSize={{ maxRows: 6 }} />;
       }
       if (field.type === "input") {
-        return <Input placeholder={field.placeholder} />;
+        return <Input />;
       }
       return null;
     },
-    [modelOptions],
+    [models, modelsLoading],
   );
 
   const title = useMemo(() => {
@@ -186,13 +150,29 @@ const NodeSettingsDrawer = ({
         </div>
       </>
     );
-  }, [onClose, handleUpdate, nodeData]);
+  }, [
+    nodeData.icon,
+    nodeData.title,
+    nodeData.description,
+    onClose,
+    handleUpdate,
+  ]);
+
+  useEffect(() => {
+    form.setFieldsValue(nodeData.settingData);
+    return () => {
+      form.resetFields();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node?.id]);
+
+  if (!node) return null;
 
   return (
     <Drawer
       title={title}
       closable={false}
-      open={open}
+      open={Boolean(node)}
       placement="right"
       size={400}
       onClose={onClose}
@@ -221,13 +201,23 @@ const NodeSettingsDrawer = ({
         },
       }}
       destroyOnHidden
+      loading={modelsLoading}
     >
       {settingFields.length ? (
         <div className="mb-4">
           <Form
             form={form}
             layout="vertical"
-            onValuesChange={handleSettingsChange}
+            onValuesChange={(_, values) => {
+              console.log(
+                "🚀 ~ index.tsx:213 ~ NodeSettingsDrawer ~ values:",
+                values,
+              );
+
+              handleUpdate({
+                settingData: values,
+              });
+            }}
           >
             {settingFields.map((field) => (
               <Form.Item
@@ -250,4 +240,4 @@ const NodeSettingsDrawer = ({
   );
 };
 
-export default NodeSettingsDrawer;
+export default memo(NodeSettingsDrawer);

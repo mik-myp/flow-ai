@@ -1,4 +1,4 @@
-import { nodeMeta, nodeTypes } from "@/lib/workflows";
+import { nodeMeta, nodeTypes } from "@/lib/workflows/constant";
 import { BaseNodeData, FlowNodeType } from "@/types/workflow";
 import { NodeProps, Node } from "@xyflow/react";
 import React from "react";

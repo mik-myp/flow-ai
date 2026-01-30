@@ -12,8 +12,8 @@ import {
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import AddNodePopover from "../AddNodePopover";
-import { FlowNodeType, TEdge, TNode } from "@/types/workflow";
-import { nodeCatalog } from "@/lib/workflows";
+import { BaseNodeData, FlowNodeType, TEdge, TNode } from "@/types/workflow";
+import { nodeCatalog } from "@/lib/workflows/constant";
 import { v4 as uuidv4 } from "uuid";
 
 type FlowEdgeData = {
@@ -51,7 +51,7 @@ const FlowEdge = ({
   selected,
   data,
 }: EdgeProps<Edge<FlowEdgeData>>) => {
-  const { deleteElements, getEdges, addNodes, addEdges, updateEdge } =
+  const { deleteElements, getEdges, getNodes, addNodes, addEdges, updateEdge } =
     useReactFlow<TNode, TEdge>();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const sourceOffset = getHandleOffset(sourcePosition, HANDLE_OFFSET);
@@ -76,6 +76,7 @@ const FlowEdge = ({
     position: { x: number; y: number };
   }) => {
     const edges = getEdges();
+    const nodes = getNodes();
     const targetEdge = edges.find((edge) => edge.id === edgeId);
     const newNodeId = uuidv4();
 
@@ -88,11 +89,23 @@ const FlowEdge = ({
       return;
     }
 
+    const sameTypeNodes = nodes.filter((node) => node.type === type);
+
+    const baseData = {
+      ...definition.data,
+      title: `${definition.meta.title} ${sameTypeNodes.length + 1}`,
+    } as BaseNodeData;
+
+    const settingData = baseData.settingData ? { ...baseData.settingData } : {};
+
     const newNode: TNode = {
       id: newNodeId,
       type,
       position,
-      data: { ...definition.data },
+      data: {
+        ...baseData,
+        settingData,
+      },
       updated_at: new Date().toISOString(),
     };
 

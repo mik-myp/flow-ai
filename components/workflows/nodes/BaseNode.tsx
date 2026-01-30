@@ -5,7 +5,7 @@ import React, { useMemo } from "react";
 import { Button } from "antd";
 import { Edge, Node, NodeProps, useReactFlow } from "@xyflow/react";
 import { BaseNodeData, FlowNodeType } from "@/types/workflow";
-import { nodeMeta } from "@/lib/workflows";
+import { nodeMeta } from "@/lib/workflows/constant";
 
 const BaseNode = ({
   children,

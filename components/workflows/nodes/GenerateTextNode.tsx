@@ -3,16 +3,18 @@ import BaseNode from "./BaseNode";
 import NodeField from "./NodeField";
 import { BaseNodeData } from "@/types/workflow";
 import FlowHandle from "../handles/FlowHandle";
+import { useMemo } from "react";
 
 const GenerateTextNode = (
   props: NodeProps<Node<BaseNodeData, "generateText">>,
 ) => {
+  const content = useMemo(() => {
+    return props.data.settingData?.textModel?.label || "";
+  }, [props.data.settingData?.textModel]);
+
   return (
     <BaseNode {...props}>
-      <NodeField
-        label="文本模型"
-        content={props.data.settingData?.textModel as string}
-      />
+      <NodeField label="文本模型" content={content} />
       {props.id ? (
         <>
           <FlowHandle

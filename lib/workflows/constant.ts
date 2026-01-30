@@ -4,6 +4,7 @@ import GenerateTextNode from "@/components/workflows/nodes/GenerateTextNode";
 import TextInputNode from "@/components/workflows/nodes/TextInputNode";
 import { BaseNodeData, FlowNodeType } from "@/types/workflow";
 import type { Node } from "@xyflow/react";
+import { SelectProps } from "antd";
 
 export const nodeMeta: Record<
   FlowNodeType,
@@ -12,11 +13,13 @@ export const nodeMeta: Record<
       icon: string;
       title: string;
       description: string;
-      settingFidlds: {
+      settingFields: {
         name: string;
         type: string;
         required: boolean;
         label: string;
+        fieldNames?: SelectProps["fieldNames"];
+        optionsSource?: string;
       }[];
     };
   }
@@ -27,7 +30,7 @@ export const nodeMeta: Record<
       icon: "pencil2",
       title: "文本输入",
       description: "文本输入描述",
-      settingFidlds: [
+      settingFields: [
         {
           name: "input",
           type: "textarea",
@@ -50,19 +53,24 @@ export const nodeMeta: Record<
       icon: "book",
       title: "生成文本",
       description: "根据系统词和提示词生成文本",
-      settingFidlds: [
+      settingFields: [
         {
           name: "textModel",
           type: "select",
           required: true,
           label: "文本模型",
+          fieldNames: {
+            label: "name",
+            value: "id",
+          },
+          optionsSource: "models",
         },
       ],
     },
     data: {
       title: "生成文本",
       description: "",
-      model: "gpt-4",
+
       settingData: {
         textModel: undefined,
       },
@@ -74,19 +82,23 @@ export const nodeMeta: Record<
       icon: "film_frames",
       title: "生成图像",
       description: "根据提示词生成图像",
-      settingFidlds: [
+      settingFields: [
         {
           name: "imageModel",
           type: "select",
           required: true,
           label: "图像模型",
+          fieldNames: {
+            label: "name",
+            value: "id",
+          },
+          optionsSource: "models",
         },
       ],
     },
     data: {
       title: "生成图像",
       description: "",
-      model: "dall-e-3",
       settingData: {
         imageModel: undefined,
       },
@@ -102,7 +114,7 @@ export const nodeCatalog: (Omit<
     icon: string;
     title: string;
     description: string;
-    settingFidlds: {
+    settingFields: {
       name: string;
       type: string;
       required: boolean;

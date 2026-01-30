@@ -1,4 +1,4 @@
-import { nodeCatalog } from "@/lib/workflows";
+import { nodeCatalog } from "@/lib/workflows/constant";
 import { Popover } from "antd";
 import { useMemo, useState, type ReactNode } from "react";
 import EmEmoji from "../emoji/EmEmoji";

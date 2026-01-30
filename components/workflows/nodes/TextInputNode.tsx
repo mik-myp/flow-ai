@@ -3,14 +3,16 @@ import BaseNode from "./BaseNode";
 import NodeField from "./NodeField";
 import { BaseNodeData } from "@/types/workflow";
 import FlowHandle from "../handles/FlowHandle";
+import { useMemo } from "react";
 
 const TextInputNode = (props: NodeProps<Node<BaseNodeData, "textInput">>) => {
+  const content = useMemo(() => {
+    return props.data.settingData?.input || "";
+  }, [props.data.settingData?.input]);
+
   return (
     <BaseNode {...props}>
-      <NodeField
-        label="文本输入"
-        content="某些浏览器会缓存流式响应。你可能需要等到响应超过 1024 字节才能看到流式响应。这通常只影响 hello world 应用程序，而不影响真实应用程序。"
-      />
+      <NodeField label="文本输入" content={content} />
       {props.id ? (
         <FlowHandle
           handles={[

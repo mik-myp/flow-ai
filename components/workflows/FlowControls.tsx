@@ -13,10 +13,11 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import AddNodePopover from "./AddNodePopover";
+import { FlowNodeType } from "@/types/workflow";
 
 type FlowControlsProps = {
   /** 开始添加节点 */
-  onStartAddNode: (type: string) => void;
+  onStartAddNode: (type: FlowNodeType) => void;
   // /** 撤销 */
   // onUndo: () => void;
   // /** 重做 */

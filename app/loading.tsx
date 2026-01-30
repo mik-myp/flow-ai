@@ -11,4 +11,4 @@ const loading = () => {
     ></Spin>
   );
 };
-export default loading;
+export default loading; 
