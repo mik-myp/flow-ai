@@ -1,7 +1,6 @@
 import { nodeCatalog } from "@/lib/workflows/constant";
 import { Popover } from "antd";
-import { useMemo, useState, type ReactNode } from "react";
-import NodeIcon from "@/components/workflows/NodeIcon";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { FlowNodeType } from "@/types/workflow";
 
 type AddNodePopoverProps = {
@@ -20,12 +19,16 @@ const AddNodePopover = ({
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = typeof open === "boolean";
   const mergedOpen = isControlled ? open : internalOpen;
-  const setOpen = (nextOpen: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(nextOpen);
-    }
-    onOpenChange?.(nextOpen);
-  };
+
+  const setOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (!isControlled) {
+        setInternalOpen(nextOpen);
+      }
+      onOpenChange?.(nextOpen);
+    },
+    [isControlled, onOpenChange],
+  );
 
   const content = useMemo(
     () => (
@@ -39,8 +42,15 @@ const AddNodePopover = ({
               key={item.id}
               content={
                 <div className="flex w-50 flex-col gap-1 text-[#101828]">
-                  <span className="relative flex h-6 w-6 shrink-0 grow-0 items-center justify-center overflow-hidden rounded-lg border-[0.5px] border-[#10182814] text-[14px]">
-                    <NodeIcon icon={item.meta.icon} size={14} />
+                  <span
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-white"
+                    style={{
+                      backgroundColor: item.meta.iconProps.bgColor,
+                    }}
+                  >
+                    {item.meta.iconProps.icon && (
+                      <item.meta.iconProps.icon size={14} />
+                    )}
                   </span>
                   <div>{item.meta.title}</div>
                   <div className="text-[12px] font-normal">
@@ -60,8 +70,15 @@ const AddNodePopover = ({
                 onMouseDown={(event) => event.stopPropagation()}
                 className="flex h-8 cursor-pointer items-center gap-2 px-2.5 text-[#101828] hover:rounded-sm hover:bg-[#f9fafb]"
               >
-                <span className="relative flex h-5 w-5 shrink-0 grow-0 items-center justify-center overflow-hidden rounded-lg border-[0.5px] border-[#10182814] text-[14px]">
-                  <NodeIcon icon={item.meta.icon} size={12} />
+                <span
+                  className="flex h-5 w-5 items-center justify-center rounded-md text-white"
+                  style={{
+                    backgroundColor: item.meta.iconProps.bgColor,
+                  }}
+                >
+                  {item.meta.iconProps.icon && (
+                    <item.meta.iconProps.icon size={14} />
+                  )}
                 </span>
                 <span>{item.meta.title}</span>
               </div>
@@ -70,7 +87,7 @@ const AddNodePopover = ({
         </div>
       </div>
     ),
-    [onSelect],
+    [onSelect, setOpen],
   );
 
   return (

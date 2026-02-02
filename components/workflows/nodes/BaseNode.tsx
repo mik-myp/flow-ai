@@ -1,27 +1,29 @@
 import clsx from "clsx";
-import NodeIcon from "@/components/workflows/NodeIcon";
-import { Trash } from "lucide-react";
-import React, { useMemo } from "react";
-import { Button } from "antd";
-import { Edge, Node, NodeProps, useReactFlow } from "@xyflow/react";
+import React, { useMemo, useState } from "react";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { BaseNodeData, FlowNodeType } from "@/types/workflow";
 import { nodeMeta } from "@/lib/workflows/constant";
+import AddNodePopover from "../AddNodePopover";
+import { Plus } from "lucide-react";
+import { Tooltip } from "antd";
 
 const BaseNode = ({
-  children,
   selected,
   data,
   type,
-  id,
+  showTarget = true,
+  showSource = true,
 }: NodeProps<Node<BaseNodeData, FlowNodeType>> & {
-  children: React.ReactNode;
+  showTarget?: boolean;
+  showSource?: boolean;
 }) => {
-  const { deleteElements } = useReactFlow<Node, Edge>();
+  const [isShowTooltip, setIsShowTooltip] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const nodeData = useMemo(() => {
     const node = nodeMeta[type];
     return {
-      icon: node.meta.icon,
+      iconProps: node.meta.iconProps,
       title: data.title ?? node.meta.title,
     };
   }, [type, data]);
@@ -29,24 +31,64 @@ const BaseNode = ({
   return (
     <div
       className={clsx(
-        "group w-87.5 rounded-xl border border-slate-200/80 bg-white text-slate-900 shadow-sm transition-colors duration-150 hover:border-blue-500 hover:shadow-md",
-        selected && "border-blue-500 shadow-md ring-2 ring-blue-500",
+        "min-w-60 rounded-xl bg-white p-3 shadow-sm",
+        "transition-shadow",
+        selected && "shadow-md ring-2 ring-blue-500",
       )}
     >
-      <div className="flex flex-row items-center justify-between gap-2 rounded-t-xl border-b border-slate-200/70 bg-slate-50/60 px-3 py-2.5">
-        <NodeIcon icon={nodeData.icon} size={18} />
-        <div className="flex-1 truncate text-sm font-medium text-slate-900">
-          {nodeData.title}
-        </div>
-        <Button
-          icon={<Trash size={16} />}
-          type="text"
-          className="nodrag nopan text-slate-500 transition-colors hover:text-rose-500"
-          onClick={() => deleteElements({ nodes: [{ id }] })}
-        />
-      </div>
-      <div className="flex flex-col gap-y-2.5 rounded-b-xl px-3 py-2.5 text-xs text-slate-700">
-        {children}
+      {showTarget && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="h-7.5! w-7.5! rounded-none! border-0! bg-transparent!"
+        ></Handle>
+      )}
+      {showSource && (
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="group h-7.5! w-7.5! rounded-none! border-0! bg-transparent!"
+          // onClick={(e) => {
+          //   e.stopPropagation();
+          //   setIsShowTooltip(false);
+          //   setPopoverOpen(true);
+          // }}
+          // onMouseEnter={() => !popoverOpen && setIsShowTooltip(true)}
+          // onMouseLeave={() => setIsShowTooltip(false)}
+        >
+          {/* <div className="pointer-events-none absolute top-2 right-1.5 flex h-4 w-4 items-center justify-center rounded-2xl bg-[#2970ff] transition-all group-hover:scale-130">
+            <AddNodePopover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              <Tooltip
+                title="点击添加节点"
+                styles={{
+                  container: {
+                    background: "#fff",
+                    color: "#354052",
+                    fontSize: "12px",
+                  },
+                }}
+                color="#fff"
+                open={isShowTooltip}
+                getPopupContainer={() =>
+                  document.getElementById("xflow-container") as HTMLElement
+                }
+              >
+                <Plus size={12} className="text-white" />
+              </Tooltip>
+            </AddNodePopover>{" "}
+          </div> */}
+        </Handle>
+      )}
+      <div className="flex items-center gap-2 text-sm text-black">
+        <span
+          className="flex h-6 w-6 items-center justify-center rounded-md text-white"
+          style={{
+            backgroundColor: nodeData.iconProps.bgColor,
+          }}
+        >
+          {nodeData.iconProps.icon && <nodeData.iconProps.icon size={16} />}
+        </span>
+        <div className="truncate font-bold">{nodeData.title}</div>
       </div>
     </div>
   );

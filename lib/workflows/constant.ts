@@ -6,7 +6,7 @@ import { BaseNodeData, FlowNodeType } from "@/types/workflow";
 import type { Node } from "@xyflow/react";
 import type { SelectProps } from "antd";
 import type { LucideIcon } from "lucide-react";
-import { Image, Sparkles, TextCursorInput } from "lucide-react";
+import { House, Image, Sparkles, TextCursorInput } from "lucide-react";
 
 type NodeSettingField = {
   name: string;
@@ -18,10 +18,13 @@ type NodeSettingField = {
 };
 
 type NodeMeta = {
-  icon: LucideIcon;
+  iconProps: {
+    icon: LucideIcon;
+    bgColor: string;
+  };
   title: string;
   description: string;
-  settingFields: NodeSettingField[];
+  settingFields?: NodeSettingField[];
 };
 
 export const nodeMeta: Record<
@@ -33,7 +36,7 @@ export const nodeMeta: Record<
   textInput: {
     id: "textInput",
     meta: {
-      icon: TextCursorInput,
+      iconProps: { icon: TextCursorInput, bgColor: "#17B26A" },
       title: "文本输入",
       description: "文本输入描述",
       settingFields: [
@@ -56,7 +59,7 @@ export const nodeMeta: Record<
   generateText: {
     id: "generateText",
     meta: {
-      icon: Sparkles,
+      iconProps: { icon: Sparkles, bgColor: "#F79009" },
       title: "生成文本",
       description: "根据系统词和提示词生成文本",
       settingFields: [
@@ -70,6 +73,12 @@ export const nodeMeta: Record<
             value: "id",
           },
           optionsSource: "models",
+        },
+        {
+          name: "system",
+          type: "textarea",
+          required: true,
+          label: "系统词",
         },
       ],
     },
@@ -85,7 +94,7 @@ export const nodeMeta: Record<
   generateImage: {
     id: "generateImage",
     meta: {
-      icon: Image,
+      iconProps: { icon: Image, bgColor: "#6172F3" },
       title: "生成图像",
       description: "根据提示词生成图像",
       settingFields: [

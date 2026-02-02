@@ -3,7 +3,6 @@ import { Drawer, Form, Input, Select, type SelectProps } from "antd";
 import { memo, useCallback, useEffect, useMemo } from "react";
 
 import { X } from "lucide-react";
-import NodeIcon from "@/components/workflows/NodeIcon";
 import { nodeMeta } from "@/lib/workflows/constant";
 import { BaseNodeData, FlowNodeType, TNode } from "@/types/workflow";
 import { useModels } from "@/lib/hooks/useModels";
@@ -34,7 +33,7 @@ const NodeSettingsDrawer = ({
   const nodeData = useMemo(() => {
     if (!node?.type) {
       return {
-        icon: null,
+        iconProps: { icon: null, bgColor: "" },
         title: "",
         description: "",
         settingData: {},
@@ -44,7 +43,7 @@ const NodeSettingsDrawer = ({
     const { meta } = nodeMeta[node.type as FlowNodeType];
 
     return {
-      icon: meta?.icon ?? null,
+      iconProps: meta?.iconProps ?? { icon: null, bgColor: "" },
       title: node.data.title ?? meta.title,
       description: node.data.description ?? "",
       settingData: node?.data?.settingData ?? {},
@@ -103,10 +102,13 @@ const NodeSettingsDrawer = ({
       <>
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center gap-3">
-            <span className="relative flex h-6 w-6 shrink-0 grow-0 items-center justify-center overflow-hidden rounded-lg border-[0.5px] border-[#10182814] text-[14px]">
-              {nodeData.icon ? (
-                <NodeIcon icon={nodeData.icon} size={14} />
-              ) : null}
+            <span
+              className="flex h-6 w-6 items-center justify-center rounded-md text-white"
+              style={{
+                backgroundColor: nodeData.iconProps.bgColor,
+              }}
+            >
+              {nodeData.iconProps.icon && <nodeData.iconProps.icon size={16} />}
             </span>
             <Input
               type="text"
@@ -152,13 +154,7 @@ const NodeSettingsDrawer = ({
         </div>
       </>
     );
-  }, [
-    nodeData.icon,
-    nodeData.title,
-    nodeData.description,
-    onClose,
-    handleUpdate,
-  ]);
+  }, [nodeData, onClose, handleUpdate]);
 
   useEffect(() => {
     form.setFieldsValue(nodeData.settingData);
@@ -211,11 +207,6 @@ const NodeSettingsDrawer = ({
             form={form}
             layout="vertical"
             onValuesChange={(_, values) => {
-              console.log(
-                "🚀 ~ index.tsx:213 ~ NodeSettingsDrawer ~ values:",
-                values,
-              );
-
               handleUpdate({
                 settingData: values,
               });

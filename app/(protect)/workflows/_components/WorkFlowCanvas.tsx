@@ -20,6 +20,7 @@ import {
   useEdgesState,
   addEdge,
   Connection,
+  MiniMap,
 } from "@xyflow/react";
 import { Background, ReactFlow } from "@xyflow/react";
 import React, {
@@ -32,6 +33,7 @@ import React, {
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useDebounceFn, useUpdateEffect } from "ahooks";
+import RunControls from "@/components/workflows/RunControls";
 
 const WorkFlowCanvas = ({
   workflowId,
@@ -376,7 +378,8 @@ const WorkFlowCanvas = ({
         onlyRenderVisibleElements
         fitView
       >
-        <Background />
+        <Background bgColor="#f0f2f7" />
+        <MiniMap />
         <FlowControls
           onStartAddNode={handleStartAddNode}
           interactionMode={interactionMode}
@@ -384,6 +387,7 @@ const WorkFlowCanvas = ({
           onToggleFullscreen={handleToggleFullscreen}
           isFullscreen={isFullscreen}
         />
+        <RunControls />
       </ReactFlow>
       {renderPreviewNode}
       {activeNode && (

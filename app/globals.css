@@ -11,18 +11,9 @@
   width: 2px;
   height: 10px;
   display: block;
-  margin: 3px 0 3px 12px;
+  margin: 10px 0 10px 15px;
 }
 
 .react-flow__handle-left:after {
-  margin: 3px 0 3px 2px;
-}
-
-.react-flow__node.selected .lucide-circle {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.react-flow__node {
-  @apply rounded-xl
+  margin: 10px 0px 10px 13px;
 }
